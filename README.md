@@ -7,11 +7,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/MCP-v1.0-blue" alt="MCP">
-  <img src="https://img.shields.io/badge/Node.js-%3E%3D18-green" alt="Node">
-  <img src="https://img.shields.io/badge/TypeScript-5.7-blue" alt="TS">
-  <img src="https://img.shields.io/badge/Tests-272%20passed-brightgreen" alt="Tests">
-  <img src="https://img.shields.io/badge/License-BSL--1.1-orange" alt="License">
+  <a href="#"><img src="https://img.shields.io/badge/MCP-v1.0-blue?style=flat-square" alt="MCP"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Node.js-%3E%3D18-green?style=flat-square" alt="Node"></a>
+  <a href="#"><img src="https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square" alt="TS"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Tests-272%20passed-brightgreen?style=flat-square" alt="Tests"></a>
+  <a href="#"><img src="https://img.shields.io/badge/License-BSL--1.1-orange?style=flat-square" alt="License"></a>
 </p>
 
 ---
