@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  <b>跨设备编程上下文同步 —— 让 AI Coding Agent 拥有持久记忆</b>
+  <b>让你的 AI 编程助手在不同设备之间记住上下文</b>
 </p>
 
 <p align="center">
@@ -18,36 +18,45 @@
 
 ## 🎯 这是什么
 
-Context Sync MCP 是一个 [Model Context Protocol](https://modelcontextprotocol.io/) 服务器，为 AI Coding Agent（如 Cursor、Claude Code、Cline 等）提供**跨设备、跨会话的上下文记忆同步**能力。
+一个 [MCP](https://modelcontextprotocol.io/) 服务器，给 Cursor、Claude Code、Codex 这类 AI 编程助手加上「跨设备记忆」。
 
-### 痛点
+### 解决什么问题
 
-> 你在公司电脑上用 Cursor 调了一天的 Bug，积累了大量上下文 —— 踩坑记录、架构决策、API 行为说明……  
-> 回到家打开笔记本，开了一个新的 Chat，Agent 对这些一无所知，你只能从头解释。
+> 你在公司电脑上用 Cursor 调了一天 Bug，Agent 帮你踩了不少坑、做了架构决策、摸清了几个 API 的脾气。  
+> 回到家开了新会话，这些全没了，你得从头跟它解释一遍。
 
-### 解决方案
-
-Context Sync 通过 **3 个 MCP 工具 + Git 同步** 解决这个问题：
+Context Sync 用 **3 个工具 + Git** 解决这件事：
 
 ```
-Agent 发现问题 → write_context 记录 → sync_push 推到远端
-                                              ↓
-新设备 / 新会话 → sync_load 一键恢复 ← Git 自动拉取
+写代码时遇到坑 → write_context 记下来 → sync_push 推到 Git
+                                                ↓
+换台电脑 / 开新会话 → sync_load 拉回来 ← 所有记忆都在
 ```
 
 ---
 
-## ✨ 核心功能
+## ⚡ 两分钟上手
 
-| 功能 | 说明 |
+**安装 MCP ≠ Agent 自动就会用。** 你还需要配一段提示词告诉 Agent「什么时候该记录」，否则它不会主动调用这些工具。
+
+整个流程就三步：
+
+1. **装好服务** — clone + build + 配到你的 Agent（见下方安装章节）
+2. **加段提示词** — 告诉 Agent 遇到什么情况该记录（`rules/` 目录有现成模板，复制就行）
+3. **用起来** — 开发中 Agent 会自动写入记录，你说 `/sync-save` 推送、`/sync-load` 恢复
+
+---
+
+## ✨ 功能
+
+| | 说明 |
 |------|------|
-| 📝 **结构化记忆写入** | 5 种主题文件：踩坑记录、架构决策、API 说明、任务进度、项目索引 |
-| 🔢 **自动编号** | gotchas/architecture 条目自动递增编号（`## 1.` → `## 2.` → ...） |
-| 🔗 **轻量级关联** | `related_to` 自动生成 Markdown 内链（`[ADR-1](architecture.md#adr-1)`） |
-| 📤 **一键推送** | `sync_push` = 自动生成 SUMMARY + git commit + push |
-| 📥 **一键恢复** | `sync_load` = git pull + 展示所有上下文 + 同步元信息 |
-| 🔀 **跨设备无冲突** | `.gitattributes` 自动配置 `merge=ours` 策略 |
-| 📊 **智能反馈** | 写入后显示条目数，推送后显示设备/时间信息 |
+| 📝 **5 类记录文件** | 踩坑记录、架构决策、API 笔记、任务进度、项目索引 |
+| 🔢 **自动编号** | 踩坑和架构记录条目自动递增（`## 1.` → `## 2.` → ...） |
+| 🔗 **条目关联** | 通过 `related_to` 自动生成跳转链接 |
+| 📤 **一条命令推送** | `sync_push` 自动生成索引、提交、推送 |
+| 📥 **一条命令恢复** | `sync_load` 拉取远端，按优先级展示所有记录 |
+| 🔀 **不怕冲突** | 自动配置 `merge=ours`，多设备写入不打架 |
 
 ---
 
@@ -215,24 +224,28 @@ node /path/to/context-sync-mcp/dist/index.js
 
 </details>
 
-### 步骤 3：给 Agent 配置提示词
+### 步骤 3：配提示词（重要）
 
-将以下规则添加到你的 Agent 系统提示或 Rules 文件中（如 `.cursorrules`）：
+光装 MCP 不够 —— Agent 不会自己猜到该什么时候记录。你需要在 Rules 文件里加一段话告诉它。
+
+**最简单的办法：** 把 `rules/` 目录下的模板直接复制过去：
+- Cursor → 复制 `rules/context-sync.mdc` 到你的 `.cursor/rules/`
+- Claude Code → 复制 `rules/CLAUDE.md` 的内容到你的 `CLAUDE.md`
+
+或者手写一段最小版本，加到你的 `.cursorrules` / `CLAUDE.md` 里：
 
 ```markdown
 ## 上下文同步
 
-你拥有 context-sync MCP 工具。请遵循以下规则：
+你有 context-sync MCP 工具，请遵守：
 
-1. **发现踩坑**时，用 `write_context` 记录到 `gotchas`
-2. **做架构决策**时，用 `write_context` 记录到 `architecture`  
-3. **发现 API 特殊行为**时，记录到 `api_notes`
-4. **完成阶段任务**时，更新 `progress`
-5. 用户说 `/sync-save` 时，调用 `sync_push`
-6. 用户说 `/sync-load` 时，调用 `sync_load`
+1. 踩坑了 → `write_context` 写到 `gotchas`
+2. 做了架构决策 → 写到 `architecture`  
+3. 发现 API 有特殊行为 → 写到 `api_notes`
+4. 完成阶段任务 → 更新 `progress`
+5. 用户说 `/sync-save` → 调 `sync_push`
+6. 用户说 `/sync-load` → 调 `sync_load`
 ```
-
-> 💡 项目 `rules/` 目录下有预写好的提示词模板，可以直接使用。
 
 ---
 
@@ -240,7 +253,7 @@ node /path/to/context-sync-mcp/dist/index.js
 
 ### `write_context`
 
-批量写入记忆条目到 `.context/` 目录。
+往 `.context/` 目录写入记录，支持批量。
 
 **参数：**
 
@@ -265,11 +278,11 @@ node /path/to/context-sync-mcp/dist/index.js
 | `progress` | `task_progress.md` | overwrite | 当前任务进度 |
 | `summary` | `SUMMARY.md` | overwrite | 项目上下文索引 |
 
-**特性：**
-- `gotchas` 和 `architecture` 自动编号（`## 1.` → `## 2.` → ...）
-- 空内容自动跳过（返回 `⏩ Skipped`）
-- 相同内容覆写不产生 git diff（幂等优化）
-- `related_to` 自动生成 Markdown 内链
+**细节：**
+- `gotchas` 和 `architecture` 会自动编号（`## 1.` → `## 2.` → ...）
+- 空内容会跳过，不写入
+- 相同内容覆写不会产生多余的 git diff
+- `related_to` 会自动生成 Markdown 跳转链接
 
 **示例：**
 
@@ -424,42 +437,27 @@ npm run test:all
 
 ---
 
-## 💡 使用示例
+## 💡 日常使用
 
-### 场景 1：发现踩坑，随手记录
+### 写代码时踩了坑
 
-对 Agent 说：
+跟 Agent 说一句就行：
 
-> "我发现 Next.js Middleware 里不能用 Node.js 的 fs 模块，记录到踩坑"
+> "Next.js Middleware 里不能用 fs 模块，帮我记一下"
 
-Agent 会自动调用：
+Agent 会调 `write_context` 写入 `gotchas.md`，下次不会再踩。
 
-```json
-{
-  "tool": "write_context",
-  "entries": [{
-    "file": "gotchas",
-    "action": "append",
-    "content": "## Next.js Middleware 限制\n- **现象**：Edge Runtime 不支持 fs 模块\n- **解决**：移到 API Route"
-  }]
-}
-```
-
-### 场景 2：下班前同步
-
-对 Agent 说：
+### 下班了，推一下
 
 > `/sync-save`
 
-Agent 调用 `sync_push()`，所有上下文推到远端。
+所有记录推送到 Git 远端，回家继续。
 
-### 场景 3：换设备恢复上下文
-
-在新设备上对 Agent 说：
+### 到家了，拉回来
 
 > `/sync-load`
 
-Agent 调用 `sync_load()`，完整恢复所有记忆：
+完整恢复所有记录：
 
 ```
 📋 Context restored (5 files loaded)
