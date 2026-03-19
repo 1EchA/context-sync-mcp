@@ -134,7 +134,7 @@ sequenceDiagram
 ### 步骤 1：克隆并构建
 
 ```bash
-git clone https://github.com/yourname/context-sync-mcp.git
+git clone https://github.com/1EchA/context-sync-mcp.git
 cd context-sync-mcp
 npm install
 npm run build
