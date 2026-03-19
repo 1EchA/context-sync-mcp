@@ -68,11 +68,10 @@ flowchart TB
 
     subgraph Files ["📁 本地 .context/"]
         direction LR
-        F1["SUMMARY.md"]
-        F2["gotchas.md"]
-        F3["architecture.md"]
-        F4["api_notes.md"]
-        F5["task_progress.md"]
+        F1["gotchas.md"]
+        F2["architecture.md"]
+        F3["api_notes.md"]
+        F0["..."]
     end
 
     subgraph Git ["☁️ Git Remote"]
@@ -84,7 +83,6 @@ flowchart TB
     P -- "commit + push" --> R
     L -- "pull + 读取" --> R
     L -. "恢复" .-> Files
-    R ~~~ |"跨设备共享"| R
 
     style Agent fill:#e3f2fd,stroke:#1976D2,stroke-width:2px,color:#0D47A1
     style Server fill:#fff8e1,stroke:#F9A825,stroke-width:2px,color:#E65100
