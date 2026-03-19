@@ -54,71 +54,74 @@ Agent 发现问题 → write_context 记录 → sync_push 推到远端
 ## 🏗️ 架构
 
 ```mermaid
-graph TB
-    subgraph Agent["🤖 AI Coding Agent"]
-        direction LR
-        A1["Cursor / Claude Code / Cline"]
+graph LR
+    subgraph Agent ["🤖 AI Coding Agent"]
+        A["Cursor / Claude Code / Cline"]
     end
 
-    subgraph MCP["⚙️ Context Sync MCP Server"]
-        direction TB
-        T1["write_context"]
-        T2["sync_push"]
-        T3["sync_load"]
+    subgraph Server ["⚙️ Context Sync MCP"]
+        W["📝 write_context"]
+        P["📤 sync_push"]
+        L["📥 sync_load"]
     end
 
-    subgraph Local["📁 本地 .context/"]
-        direction TB
+    subgraph Files ["📁 .context/"]
         F1["SUMMARY.md"]
         F2["gotchas.md"]
         F3["architecture.md"]
         F4["api_notes.md"]
         F5["task_progress.md"]
-        F6["sync_meta.json"]
     end
 
-    subgraph Remote["☁️ Git Remote"]
-        direction TB
-        R1[".context/ 分支"]
+    subgraph Git ["☁️ Git Remote"]
+        R["远端 .context/"]
     end
 
-    Agent -->|"stdio"| MCP
-    T1 -->|"读写"| Local
-    T2 -->|"commit + push"| Remote
-    T3 -->|"pull + 读取"| Remote
-    T3 -->|"恢复"| Local
-    Remote -.->|"跨设备共享"| Remote
+    A -- "stdio" --> W & P & L
+    W -. "读写" .-> F1 & F2 & F3 & F4 & F5
+    P -- "commit + push" --> R
+    L -- "pull" --> R
+    L -. "恢复" .-> F1 & F2 & F3 & F4 & F5
 
-    style Agent fill:#1a1a2e,stroke:#16213e,color:#e94560
-    style MCP fill:#0f3460,stroke:#16213e,color:#e2e2e2
-    style Local fill:#1a1a2e,stroke:#533483,color:#e2e2e2
-    style Remote fill:#1a1a2e,stroke:#e94560,color:#e2e2e2
+    style Agent fill:#e8f4f8,stroke:#2196F3,stroke-width:2px,color:#1565C0
+    style Server fill:#fff3e0,stroke:#FF9800,stroke-width:2px,color:#E65100
+    style Files fill:#f3e5f5,stroke:#9C27B0,stroke-width:2px,color:#6A1B9A
+    style Git fill:#e8f5e9,stroke:#4CAF50,stroke-width:2px,color:#2E7D32
 ```
 
 ### 数据流
 
 ```mermaid
 sequenceDiagram
+    actor Dev as 👨‍💻 开发者
     participant A as 🤖 Agent
     participant M as ⚙️ MCP Server
-    participant G as ☁️ Git Remote
+    participant G as ☁️ Git
 
-    Note over A: 开发过程中发现问题
-    A->>M: write_context({file: "gotchas", ...})
-    M-->>A: ✅ Appended to gotchas (now 3 entries)
+    rect rgb(232, 244, 248)
+        Note over Dev,A: 💡 开发过程中
+        Dev ->> A: 发现了一个坑...
+        A ->> M: write_context(gotchas, "SQLite WAL...")
+        M -->> A: ✅ Appended to gotchas (now 3 entries)
+    end
 
-    Note over A: 用户说 /sync-save
-    A->>M: sync_push()
-    M->>M: 自动生成 SUMMARY.md
-    M->>M: 确保 .gitattributes
-    M->>G: git add + commit + push
-    M-->>A: ✅ Context synced · Device: MacBook · ⏰ 14:32
+    rect rgb(255, 243, 224)
+        Note over Dev,A: 📤 下班前保存
+        Dev ->> A: /sync-save
+        A ->> M: sync_push()
+        M ->> M: 生成 SUMMARY + sync_meta
+        M ->> G: git commit + push
+        M -->> A: ✅ Synced · MacBook · 18:30
+    end
 
-    Note over A: 换设备，用户说 /sync-load
-    A->>M: sync_load()
-    M->>G: git pull --ff-only
-    M->>M: 读取所有 .context/ 文件
-    M-->>A: 📋 Context restored (5 files) · Last sync: 14:32
+    rect rgb(232, 245, 233)
+        Note over Dev,A: 📥 换设备恢复
+        Dev ->> A: /sync-load
+        A ->> M: sync_load()
+        M ->> G: git pull --ff-only
+        G -->> M: 最新 .context/
+        M -->> A: 📋 Restored (5 files) · Last: 18:30
+    end
 ```
 
 ---
