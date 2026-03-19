@@ -54,18 +54,20 @@ Agent 发现问题 → write_context 记录 → sync_push 推到远端
 ## 🏗️ 架构
 
 ```mermaid
-graph LR
+flowchart TB
     subgraph Agent ["🤖 AI Coding Agent"]
         A["Cursor / Claude Code / Cline"]
     end
 
-    subgraph Server ["⚙️ Context Sync MCP"]
-        W["📝 write_context"]
-        P["📤 sync_push"]
-        L["📥 sync_load"]
+    subgraph Server ["⚙️ Context Sync MCP Server"]
+        direction LR
+        W(["📝 write_context"])
+        P(["📤 sync_push"])
+        L(["📥 sync_load"])
     end
 
-    subgraph Files ["📁 .context/"]
+    subgraph Files ["📁 本地 .context/"]
+        direction LR
         F1["SUMMARY.md"]
         F2["gotchas.md"]
         F3["architecture.md"]
@@ -74,19 +76,20 @@ graph LR
     end
 
     subgraph Git ["☁️ Git Remote"]
-        R["远端 .context/"]
+        R[("远端仓库")]
     end
 
-    A -- "stdio" --> W & P & L
-    W -. "读写" .-> F1 & F2 & F3 & F4 & F5
+    A -- "stdio" --> Server
+    W -. "读写" .-> Files
     P -- "commit + push" --> R
-    L -- "pull" --> R
-    L -. "恢复" .-> F1 & F2 & F3 & F4 & F5
+    L -- "pull + 读取" --> R
+    L -. "恢复" .-> Files
+    R ~~~ |"跨设备共享"| R
 
-    style Agent fill:#e8f4f8,stroke:#2196F3,stroke-width:2px,color:#1565C0
-    style Server fill:#fff3e0,stroke:#FF9800,stroke-width:2px,color:#E65100
-    style Files fill:#f3e5f5,stroke:#9C27B0,stroke-width:2px,color:#6A1B9A
-    style Git fill:#e8f5e9,stroke:#4CAF50,stroke-width:2px,color:#2E7D32
+    style Agent fill:#e3f2fd,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    style Server fill:#fff8e1,stroke:#F9A825,stroke-width:2px,color:#E65100
+    style Files fill:#f3e5f5,stroke:#8E24AA,stroke-width:2px,color:#4A148C
+    style Git fill:#e8f5e9,stroke:#2E7D32,stroke-width:2px,color:#1B5E20
 ```
 
 ### 数据流
