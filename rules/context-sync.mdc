@@ -1,0 +1,45 @@
+---
+description: Context Sync - 跨设备上下文同步规则
+globs: 
+alwaysApply: true
+---
+
+## 上下文记忆规则（Context Sync MCP）
+
+### 实时记录（自动，无需用户触发）
+发现以下信息时，调用 `write_context` 工具批量写入：
+
+1. **避雷点/踩坑** → `file:"gotchas", action:"append"`
+   - 必须包含：现象、原因、解决方案、影响文件
+   - 写入后告知用户："⚠️ 已记录避雷点：[标题]"
+
+2. **架构决策** → `file:"architecture", action:"append"`
+   - 必须包含：决策、原因、权衡
+   - 写入后告知用户："📐 已记录架构决策：[决策]"
+
+3. **接口行为/限制** → `file:"api_notes", action:"append"`
+   - 包含：接口路径、行为特征、限制条件
+
+4. **完成待办项** → `file:"progress", action:"overwrite"`
+   - 更新完整的待办清单状态
+
+5. 如果新记录与已有记录有关联，在 `related_to` 中标注（如 `["ADR-1", "踩坑#2"]`）
+
+可以在一次 `write_context` 调用中批量写入多个文件，减少工具调用次数。
+
+### /sync-save（用户手动，推送到远程）
+当用户输入 `/sync-save` 时：
+1. 确保 progress 和 summary 是最新的（如有需要先 write_context）
+2. 调用 `sync_push` 工具推送到远程
+3. 告知用户推送结果
+
+### /sync-load（用户手动，从远程拉取）
+当用户输入 `/sync-load` 时：
+1. 调用 `sync_load` 工具获取上下文
+2. 如返回引导信息，展示引导步骤
+3. 成功后重点关注：gotchas（避免踩坑）和 progress（继续进度）
+4. 向用户汇报恢复的上下文，询问继续哪个任务
+
+### 主动提醒
+- 完成大任务后提醒："如果要切换设备，可以 `/sync-save` 推送上下文"
+- 本地有多条未推送记录时提醒用户

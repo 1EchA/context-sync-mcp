@@ -1,0 +1,12 @@
+# Test files (not needed for npm package)
+test/
+doc/
+rules/
+
+# Config
+tsconfig.json
+.gitignore
+
+# IDE
+.vscode/
+.idea/

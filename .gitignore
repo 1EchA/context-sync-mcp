@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test sandbox artifacts
+test/sandbox/
+
+# Context files (managed by the tool itself)
+.context/
+
+# Logs
+*.log
