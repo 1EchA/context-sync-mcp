@@ -56,7 +56,7 @@ Agent 发现问题 → write_context 记录 → sync_push 推到远端
 ```mermaid
 flowchart TB
     subgraph Agent ["🤖 AI Coding Agent"]
-        A["Cursor / Claude Code / Cline"]
+        A["Codex / Claude Code"]
     end
 
     subgraph Server ["⚙️ Context Sync MCP Server"]
@@ -94,7 +94,7 @@ flowchart TB
 
 ```mermaid
 sequenceDiagram
-    actor Dev as 👨‍💻 开发者
+    participant Dev as 👨‍💻 开发者
     participant A as 🤖 Agent
     participant M as ⚙️ MCP Server
     participant G as ☁️ Git
