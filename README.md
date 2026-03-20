@@ -25,7 +25,7 @@
 > ✅ **解法**：Context Sync 为 Agent 提供了一个**独立于对话的长期记忆库**。基于 Git 和 MCP，换台电脑，敲一句 `/sync-load`，进度与上下文无缝衔接。
 
 **工作流极简：**
-踩坑了 → `write_context` 自动记录 → `sync_push` 推送 → 换电脑 `sync_load` 拉取。就是这么简单。
+踩坑了/新决策 → `write_context` 自动记录 → `sync_push` 推送 → 换电脑 `sync_load` 拉取。就是这么简单。
 
 ---
 
@@ -59,7 +59,7 @@
 - **Git** 已安装并配置好 SSH/HTTPS 认证
 - 当前目录在一个 Git 仓库内
 
-### 🚀 施放“配置魔法”
+### 让你的coding agent帮你配置”
 
 复制下面这段话，**直接发给你的 Cursor 或 Claude Code**，剩下的交给它：
 
