@@ -59,9 +59,9 @@
 - **Git** 已安装并配置好 SSH/HTTPS 认证
 - 当前目录在一个 Git 仓库内
 
-### 让你的coding agent帮你配置”
+### 让你的coding agent帮你配置
 
-复制下面这段话，**直接发给你的 Cursor 或 Claude Code**，剩下的交给它：
+复制下面这段话，**直接发给你的 Codex 或 Claude Code**，剩下的交给它：
 
 ```text
 帮我安装并配置 context-sync-mcp。  
