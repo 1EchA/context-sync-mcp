@@ -7,6 +7,7 @@
 </p>
 
 <p align="center">
+  <a href="https://www.npmjs.com/package/context-sync-mcp"><img src="https://img.shields.io/npm/v/context-sync-mcp?style=flat-square&color=cb3837" alt="npm"></a>
   <a href="#"><img src="https://img.shields.io/badge/MCP-v1.0-blue?style=flat-square" alt="MCP"></a>
   <a href="#"><img src="https://img.shields.io/badge/Node.js-%3E%3D18-green?style=flat-square" alt="Node"></a>
   <a href="#"><img src="https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square" alt="TS"></a>
@@ -132,7 +133,15 @@ sequenceDiagram
 - **Git** 已安装并配置好 SSH/HTTPS 认证
 - 一个 Git 仓库（你的项目本身，或一个专用的 context 仓库）
 
-### 步骤 1：克隆并构建
+### 步骤 1：安装
+
+**方式 A：从 npm 安装（推荐）**
+
+```bash
+npm install -g context-sync-mcp
+```
+
+**方式 B：从源码构建**
 
 ```bash
 git clone https://github.com/1EchA/context-sync-mcp.git
