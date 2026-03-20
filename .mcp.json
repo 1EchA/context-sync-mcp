@@ -4,7 +4,7 @@
       "type": "local",
       "command": "node",
       "args": [
-        "/opt/homebrew/lib/node_modules/context-sync-mcp/dist/index.js"
+        "/Users/xujia/cursor/context-sync-mcp/dist/index.js"
       ]
     }
   }

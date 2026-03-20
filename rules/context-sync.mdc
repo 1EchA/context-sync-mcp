@@ -27,18 +27,29 @@ alwaysApply: true
 
 可以在一次 `write_context` 调用中批量写入多个文件，减少工具调用次数。
 
+### /sync-init（用户手动，首次初始化）
+当用户输入 `/sync-init`、“初始化上下文同步”、“初始化这个仓库的 context sync” 时：
+1. 调用 `sync_init` 工具建立初始 `progress` 和 `summary`
+2. 如果项目已有 `.context/`，不要覆盖，提示用户改用 `/sync-load`
+3. 初始化完成后，告知用户后续使用 `/sync-save` 保存增量、`/sync-load` 恢复上下文
+
 ### /sync-save（用户手动，推送到远程）
-当用户输入 `/sync-save` 时：
+当用户输入 `/sync-save`、`sync push`、“保存上下文”、"上传上下文" 时：
 1. 确保 progress 和 summary 是最新的（如有需要先 write_context）
 2. 调用 `sync_push` 工具推送到远程
 3. 告知用户推送结果
 
 ### /sync-load（用户手动，从远程拉取）
-当用户输入 `/sync-load` 时：
+当用户输入 `/sync-load`、`sync pull`、“拉取上下文”、"恢复上下文"、"新设备恢复上下文" 时：
 1. 调用 `sync_load` 工具获取上下文
 2. 如返回引导信息，展示引导步骤
 3. 成功后重点关注：gotchas（避免踩坑）和 progress（继续进度）
 4. 向用户汇报恢复的上下文，询问继续哪个任务
+
+### 命名约束
+- `sync_push` / `sync_load` 是 MCP 内部工具名，不是给用户看的 slash 命令
+- 面向用户时，推送统一说 `/sync-save`
+- 面向用户时，拉取统一说 `/sync-load`；其中 `sync pull` 视为 `/sync-load` 的自然语言别名
 
 ### 主动提醒
 - 完成大任务后提醒："如果要切换设备，可以 `/sync-save` 推送上下文"

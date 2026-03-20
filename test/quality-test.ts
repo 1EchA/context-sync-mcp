@@ -11,9 +11,10 @@
  */
 
 import { writeContext } from "../dist/tools/write-context.js";
+import { syncInit } from "../dist/tools/sync-init.js";
 import { syncPush } from "../dist/tools/sync-push.js";
 import { syncLoad } from "../dist/tools/sync-load.js";
-import { readFile, rm, mkdir } from "node:fs/promises";
+import { readFile, writeFile, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
 
@@ -64,6 +65,29 @@ function setup() {
 }
 
 // ── Quality Test Scenarios ─────────────────────────────────────────
+
+async function q0_initBootstrap() {
+  section("Q0: sync_init 首次初始化");
+
+  await writeFile(join(WORKDIR, "README.md"), "# Test Sandbox\n\nBootstrap repo for sync_init.\n", "utf-8");
+
+  const result = await syncInit(undefined, undefined, undefined, true);
+  const text = result.content[0].text;
+
+  quality(text.includes("initialized"), "sync_init 返回初始化成功提示");
+  quality(text.includes("Context synced successfully") || text.includes("Committed locally"), "sync_init 自动执行首次推送");
+
+  const progress = await readFile(join(WORKDIR, ".context/task_progress.md"), "utf-8");
+  const summary = await readFile(join(WORKDIR, ".context/SUMMARY.md"), "utf-8");
+  const gitFiles = execSync(`cd ${WORKDIR} && git ls-files .context/`, { encoding: "utf-8" });
+
+  quality(progress.includes("已初始化 Context Sync"), "初始化生成默认 progress");
+  quality(progress.includes("**当前分支**：master") || progress.includes("**当前分支**：main"), "初始化 progress 带当前分支");
+  quality(summary.includes("项目初始化摘要"), "初始化生成默认 summary");
+  quality(summary.includes("README 标题") && summary.includes("Test Sandbox"), "初始化 summary 带 README 标题");
+  quality(gitFiles.includes("task_progress.md"), "初始化文件已进入 git");
+  quality(gitFiles.includes("SUMMARY.md"), "初始化 summary 已进入 git");
+}
 
 async function q1_responseMessageQuality() {
   section("Q1: 工具响应消息质量");
@@ -325,6 +349,24 @@ async function q10_gitattributesSurvival() {
   quality(meta.includes("\n"), "sync_meta.json 格式化输出（非压缩）");
 }
 
+async function q11_promptAliasCoverage() {
+  section("Q11: 规则与工具别名覆盖");
+
+  const cursorRules = await readFile(new URL("../.cursorrules", import.meta.url), "utf-8");
+  const mdcRules = await readFile(new URL("../rules/context-sync.mdc", import.meta.url), "utf-8");
+  const claudeRules = await readFile(new URL("../rules/CLAUDE.md", import.meta.url), "utf-8");
+  const indexSource = await readFile(new URL("../src/index.ts", import.meta.url), "utf-8");
+
+  quality(cursorRules.includes("/sync-init"), ".cursorrules 包含 /sync-init 入口");
+  quality(cursorRules.includes("sync pull"), ".cursorrules 包含 sync pull → sync_load 映射");
+  quality(mdcRules.includes("sync pull"), "Cursor 规则包含 sync pull 别名");
+  quality(claudeRules.includes("sync pull"), "Claude 规则包含 sync pull 别名");
+  quality(mdcRules.includes("不要说 `/sync-push`") || claudeRules.includes("不对用户说 `/sync-push`"), "规则明确禁止对用户暴露 /sync-push");
+  quality(indexSource.includes("Bootstrap Context Sync for a project that has not been initialized yet"), "index 注册了 sync_init 工具描述");
+  quality(indexSource.includes("Do NOT use this tool for pull/load/restore/new-device recovery requests"), "sync_push 描述明确排除 load 类请求");
+  quality(indexSource.includes("Do NOT use sync_push for these requests"), "sync_load 描述明确接管 sync pull/load 请求");
+}
+
 // ── Main ─────────────────────────────────────────────────────────────
 
 async function main() {
@@ -339,6 +381,7 @@ async function main() {
     setup();
     console.log("  ✅ Setup complete\n");
 
+    await q0_initBootstrap();
     await q1_responseMessageQuality();
     await q2_autoNumberingNaturalness();
     await q3_summaryAutoGenQuality();
@@ -349,6 +392,7 @@ async function main() {
     await q8_edgeInteractions();
     await q9_errorMessageActionability();
     await q10_gitattributesSurvival();
+    await q11_promptAliasCoverage();
 
   } catch (error: any) {
     console.error(`\n💥 Unexpected error: ${error.message}`);

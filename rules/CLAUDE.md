@@ -11,14 +11,26 @@
 - 完成待办 → file:"progress", action:"overwrite"
 - 有关联时在 related_to 中标注
 
+### /sync-init
+当用户输入 `/sync-init`、初始化上下文同步、初始化这个仓库的 context sync 时：
+1. 调用 sync_init 建立初始上下文
+2. 如果项目已有上下文，提示改用 /sync-load
+3. 后续继续使用 /sync-save 和 /sync-load
+
 ### /sync-save
+当用户输入 `/sync-save`、`sync push`、保存/上传上下文时：
 1. 确保 progress 和 summary 最新
 2. 调用 sync_push 推送到远程
 
 ### /sync-load
+当用户输入 `/sync-load`、`sync pull`、拉取/恢复上下文、新设备恢复上下文时：
 1. 调用 sync_load 获取上下文
 2. 重点关注 gotchas 和 progress
 3. 汇报并询问继续哪个任务
+
+### 命名约束
+- `sync_push` / `sync_load` 是内部工具名，不对用户说 `/sync-push`
+- 面向用户统一使用 `/sync-save` 和 `/sync-load`
 
 ### 主动提醒
 - 完成大任务后提醒 /sync-save

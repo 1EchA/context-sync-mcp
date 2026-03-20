@@ -25,7 +25,7 @@
 > ✅ **解法**：Context Sync 为 Agent 提供了一个**独立于对话的长期记忆库**。基于 Git 和 MCP，换台电脑，敲一句 `/sync-load`，进度与上下文无缝衔接。
 
 **工作流极简：**
-踩坑了/新决策 → `write_context` 自动记录 → `sync_push` 推送 → 换电脑 `sync_load` 拉取。就是这么简单。
+新项目先 `sync_init` 建立第一份上下文 → 踩坑了/新决策用 `write_context` 自动记录 → `sync_push` 推送 → 换电脑 `sync_load` 拉取。就是这么简单。
 
 ---
 
@@ -75,8 +75,10 @@
 - 做了架构决策 → 写到 architecture
 - 发现 API 特殊行为 → 写到 api_notes
 - 完成阶段任务 → 更新 progress
-- 用户说 /sync-save → 调 sync_push
-- 用户说 /sync-load → 调 sync_load
+- 用户说 /sync-init、初始化上下文同步、初始化这个仓库的 context sync → 调 sync_init
+- 用户说 /sync-save、sync push、保存上下文、上传上下文 → 调 sync_push
+- 用户说 /sync-load、sync pull、拉取上下文、恢复上下文、新设备恢复上下文 → 调 sync_load
+- `sync_push` / `sync_load` 是内部工具名；对用户统一使用 `/sync-save` 和 `/sync-load`，不要说 `/sync-push`
 ```
 
 > 🪄 **配置完成后，你不需要记忆任何额外命令**。像平常一样自然地写代码、提问，Agent 知道什么时候该记录。下班前对它说一句 `/sync-save` 即可。
@@ -201,11 +203,14 @@ sequenceDiagram
 - `progress` (overwrite): 当前任务进度。
 - `summary` (overwrite): 项目整体索引。
 
+### `sync_init`
+为一个还没有 `.context/` 的项目建立第一份上下文基线。适用于 `/sync-init`、初始化上下文同步、初始化当前仓库的 context sync。若项目已有上下文，应改用 `/sync-load`。
+
 ### `sync_push`
-将 `.context/` 推送到 Git 远端。自动生成 `SUMMARY.md`、防冲突配置 `.gitattributes` 与同步元信息 `sync_meta.json`。
+将 `.context/` 推送到 Git 远端。自动生成 `SUMMARY.md`、防冲突配置 `.gitattributes` 与同步元信息 `sync_meta.json`。适用于 `/sync-save`、`sync push`、保存/上传上下文。
 
 ### `sync_load`
-从远端拉取最新上下文，按优先级展示给 Agent 供推理使用。
+从远端拉取最新上下文，按优先级展示给 Agent 供推理使用。适用于 `/sync-load`、`sync pull`、拉取/恢复上下文、新设备恢复上下文。
 
 </details>
 

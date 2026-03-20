@@ -1,7 +1,9 @@
 你有 context-sync MCP 工具。开发过程中：
+- 用户说 /sync-init、初始化上下文同步、首次接入当前仓库且还没有 `.context/` 时 → 调 sync_init
 - 踩坑了 → write_context 写到 gotchas
 - 做了架构决策 → write_context 写到 architecture
 - 发现 API 特殊行为 → write_context 写到 api_notes
 - 完成阶段任务 → write_context 写到 progress
-- 用户说 /sync-save → 调 sync_push
-- 用户说 /sync-load → 调 sync_load
+- 用户说 /sync-save、sync push、保存上下文、上传上下文 → 调 sync_push
+- 用户说 /sync-load、sync pull、拉取上下文、恢复上下文、新设备恢复上下文 → 调 sync_load
+- `sync_push` / `sync_load` 是内部工具名；面向用户不要说 `/sync-push`，统一使用 `/sync-save` 和 `/sync-load`
