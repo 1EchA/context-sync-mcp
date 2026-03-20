@@ -19,9 +19,9 @@ import {
   CONTEXT_DIR,
 } from "../utils.js";
 
-export async function syncPush(summary?: string) {
+export async function syncPush(summary?: string, projectPath?: string) {
   try {
-    const projectRoot = await getProjectRoot();
+    const projectRoot = await getProjectRoot(projectPath);
     const contextDir = await ensureContextDir(projectRoot);
 
     // 1. Check if there are any .context/ changes (staged or unstaged)

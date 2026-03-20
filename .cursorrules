@@ -1,0 +1,7 @@
+你有 context-sync MCP 工具。开发过程中：
+- 踩坑了 → write_context 写到 gotchas
+- 做了架构决策 → write_context 写到 architecture
+- 发现 API 特殊行为 → write_context 写到 api_notes
+- 完成阶段任务 → write_context 写到 progress
+- 用户说 /sync-save → 调 sync_push
+- 用户说 /sync-load → 调 sync_load

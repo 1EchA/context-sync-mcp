@@ -22,9 +22,9 @@ interface WriteEntry {
   related_to?: string[];
 }
 
-export async function writeContext(entries: WriteEntry[]) {
+export async function writeContext(entries: WriteEntry[], projectPath?: string) {
   try {
-    const projectRoot = await getProjectRoot();
+    const projectRoot = await getProjectRoot(projectPath);
     const contextDir = await ensureContextDir(projectRoot);
 
     const results: string[] = [];

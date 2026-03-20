@@ -23,13 +23,22 @@ export const FILE_MAP: Record<string, string> = {
 };
 
 /**
- * Get the project root directory (where .git is located).
- * Walks up from cwd until it finds .git or hits root.
+ * Resolve the base path for git operations.
+ * Priority: explicit projectPath > CONTEXT_SYNC_PROJECT_PATH env var > process.cwd()
  */
-export async function getProjectRoot(): Promise<string> {
+export function resolveBasePath(projectPath?: string): string {
+  return projectPath || process.env.CONTEXT_SYNC_PROJECT_PATH || process.cwd();
+}
+
+/**
+ * Get the project root directory (where .git is located).
+ * Walks up from basePath until it finds .git or hits root.
+ */
+export async function getProjectRoot(projectPath?: string): Promise<string> {
+  const basePath = resolveBasePath(projectPath);
   try {
     const { stdout } = await execFileAsync("git", ["rev-parse", "--show-toplevel"], {
-      cwd: process.cwd(),
+      cwd: basePath,
     });
     return stdout.trim();
   } catch {

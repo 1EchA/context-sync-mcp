@@ -32,9 +32,10 @@ server.tool(
       content: z.string().describe("Markdown formatted content to write"),
       related_to: z.array(z.string()).optional().describe("Optional related entry IDs for lightweight associations, e.g. ['ADR-1', 'Gotcha#2']"),
     })).describe("Array of entries to write"),
+    project_path: z.string().optional().describe("Optional: absolute path to the target project. If omitted, uses CONTEXT_SYNC_PROJECT_PATH env var or current working directory."),
   },
-  async ({ entries }) => {
-    return await writeContext(entries);
+  async ({ entries, project_path }) => {
+    return await writeContext(entries, project_path);
   }
 );
 
@@ -44,9 +45,10 @@ server.tool(
   "Push local .context/ files to remote git. Auto-generates SUMMARY.md. Use when user triggers /sync-save to sync context across devices.",
   {
     summary: z.string().optional().describe("Optional: custom SUMMARY.md content. If omitted, auto-generated from existing context files."),
+    project_path: z.string().optional().describe("Optional: absolute path to the target project. If omitted, uses CONTEXT_SYNC_PROJECT_PATH env var or current working directory."),
   },
-  async ({ summary }) => {
-    return await syncPush(summary);
+  async ({ summary, project_path }) => {
+    return await syncPush(summary, project_path);
   }
 );
 
@@ -56,9 +58,10 @@ server.tool(
   "Pull latest .context/ files from remote git and return their contents. Use when user triggers /sync-load to restore context on a new device.",
   {
     topic: z.string().optional().describe("Optional: load only a specific topic file"),
+    project_path: z.string().optional().describe("Optional: absolute path to the target project. If omitted, uses CONTEXT_SYNC_PROJECT_PATH env var or current working directory."),
   },
-  async ({ topic }) => {
-    return await syncLoad(topic);
+  async ({ topic, project_path }) => {
+    return await syncLoad(topic, project_path);
   }
 );
 

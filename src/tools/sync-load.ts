@@ -7,6 +7,7 @@
 
 import {
   getProjectRoot,
+  resolveBasePath,
   hasGitRepo,
   hasContextFiles,
   readAllContextFiles,
@@ -18,8 +19,8 @@ import {
 } from "../utils.js";
 import { join } from "node:path";
 
-export async function syncLoad(topic?: string) {
-  const cwd = process.cwd();
+export async function syncLoad(topic?: string, projectPath?: string) {
+  const cwd = resolveBasePath(projectPath);
 
   // Step 1: Check if we're in a git repo
   const isGitRepo = await hasGitRepo(cwd);
@@ -48,7 +49,7 @@ export async function syncLoad(topic?: string) {
   // Step 2: git pull (use --ff-only for safety, avoids rebase conflicts)
   let projectRoot: string;
   try {
-    projectRoot = await getProjectRoot();
+    projectRoot = await getProjectRoot(projectPath);
   } catch {
     return {
       content: [

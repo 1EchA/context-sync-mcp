@@ -222,8 +222,30 @@ cd test/sandbox && npx tsx ../e2e-runner.ts
 - sync_push：244ms
 - sync_load：108ms
 
+### GitHub 上传（2026-03-20 00:04）
+
+已成功上传到 GitHub：
+
+- **仓库地址**：https://github.com/1EchA/context-sync-mcp
+- **可见性**：Public
+- **提交数**：4 commits on `main`
+- **操作**：
+  - 创建 GitHub 仓库（通过浏览器）
+  - 清理 `.gitignore`（排除 `test/remote.git/`、`test/device-a/`、`test/device-b/` 等测试产物）
+  - 更新 README.md 中的 clone URL
+  - 推送全部代码
+
 **全部测试通过（272 = 34 e2e + 20 deep + 28 extended + 36 design + 21 final + 61 integration + 72 quality）。**
+
+### npm 发布（2026-03-20 12:40）
+
+已发布到 npm：
+
+- **包名**：[context-sync-mcp](https://www.npmjs.com/package/context-sync-mcp)
+- **版本**：0.1.0
+- **大小**：19.0 kB (packed) / 64.9 kB (unpacked)
+- **安装**：`npm install -g context-sync-mcp` 或 `npx context-sync-mcp`
 
 ### 下一步
 - [ ] 在 Cursor 中配置并测试
-- [ ] 发布到 npm（可选）
+

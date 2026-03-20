@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "context-sync": {
+      "type": "local",
+      "command": "node",
+      "args": [
+        "/opt/homebrew/lib/node_modules/context-sync-mcp/dist/index.js"
+      ]
+    }
+  }
+}
