@@ -1,8 +1,5 @@
-<p align="center">
-  <img src="./assets/logo.png" width="120" alt="Context Sync Logo" />
-</p>
-
 <h1 align="center">
+  <img src="./assets/logo.png" width="48" alt="Context Sync Logo" style="vertical-align: middle; border-radius: 8px; margin-right: 8px; margin-bottom: 6px;" />
   Context Sync MCP
 </h1>
 
