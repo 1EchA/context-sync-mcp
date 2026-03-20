@@ -133,122 +133,9 @@ sequenceDiagram
 - **Git** 已安装并配置好 SSH/HTTPS 认证
 - 一个 Git 仓库（你的项目本身，或一个专用的 context 仓库）
 
-### 步骤 1：安装
+### 🚀 让 Agent 帮你配（推荐）
 
-**方式 A：从 npm 安装（推荐）**
-
-```bash
-npm install -g context-sync-mcp
-```
-
-**方式 B：从源码构建**
-
-```bash
-git clone https://github.com/1EchA/context-sync-mcp.git
-cd context-sync-mcp
-npm install
-npm run build
-```
-
-### 步骤 2：配置到你的 Agent
-
-<details>
-<summary><b>Cursor</b></summary>
-
-编辑 `~/.cursor/mcp.json`（全局）或项目根目录的 `.cursor/mcp.json`：
-
-```json
-{
-  "mcpServers": {
-    "context-sync": {
-      "command": "node",
-      "args": ["/absolute/path/to/context-sync-mcp/dist/index.js"]
-    }
-  }
-}
-```
-
-</details>
-
-<details>
-<summary><b>Claude Code</b></summary>
-
-运行：
-
-```bash
-claude mcp add context-sync node /absolute/path/to/context-sync-mcp/dist/index.js
-```
-
-或编辑 `~/.claude.json`：
-
-```json
-{
-  "mcpServers": {
-    "context-sync": {
-      "command": "node",
-      "args": ["/absolute/path/to/context-sync-mcp/dist/index.js"]
-    }
-  }
-}
-```
-
-</details>
-
-<details>
-<summary><b>Cline (VS Code)</b></summary>
-
-在 Cline 设置 → MCP Servers → 添加：
-
-```json
-{
-  "context-sync": {
-    "command": "node",
-    "args": ["/absolute/path/to/context-sync-mcp/dist/index.js"]
-  }
-}
-```
-
-</details>
-
-<details>
-<summary><b>其他 MCP 兼容 Agent</b></summary>
-
-Context Sync 使用标准的 **stdio transport**，任何支持 MCP 的 Agent 都可以通过以下命令启动：
-
-```bash
-node /path/to/context-sync-mcp/dist/index.js
-```
-
-</details>
-
-### 步骤 3：配提示词（重要）
-
-光装 MCP 不够 —— Agent 不会自己猜到该什么时候记录。你需要在 Rules 文件里加一段话告诉它。
-
-**最简单的办法：** 把 `rules/` 目录下的模板直接复制过去：
-- Cursor → 复制 `rules/context-sync.mdc` 到你的 `.cursor/rules/`
-- Claude Code → 复制 `rules/CLAUDE.md` 的内容到你的 `CLAUDE.md`
-
-或者手写一段最小版本，加到你的 `.cursorrules` / `CLAUDE.md` 里：
-
-```markdown
-## 上下文同步
-
-你有 context-sync MCP 工具，请遵守：
-
-1. 踩坑了 → `write_context` 写到 `gotchas`
-2. 做了架构决策 → 写到 `architecture`  
-3. 发现 API 有特殊行为 → 写到 `api_notes`
-4. 完成阶段任务 → 更新 `progress`
-5. 用户说 `/sync-save` → 调 `sync_push`
-6. 用户说 `/sync-load` → 调 `sync_load`
-```
-
----
-
-### 🚀 或者：直接让 Agent 帮你配
-
-把下面这段话发给你的 Coding Agent，它会帮你完成全部配置：
+把下面这段话直接发给你的 Coding Agent，它会自动完成安装和配置：
 
 > 帮我安装并配置 context-sync-mcp。  
 > 1. 运行 `npm install -g context-sync-mcp`  
@@ -265,6 +152,61 @@ node /path/to/context-sync-mcp/dist/index.js
 > - 用户说 /sync-save → 调 sync_push
 > - 用户说 /sync-load → 调 sync_load
 > ```
+
+---
+
+<details>
+<summary><b>手动配置</b>（如果你想自己来）</summary>
+
+#### 步骤 1：安装
+
+**从 npm 安装（推荐）**
+
+```bash
+npm install -g context-sync-mcp
+```
+
+**或从源码构建**
+
+```bash
+git clone https://github.com/1EchA/context-sync-mcp.git
+cd context-sync-mcp
+npm install
+npm run build
+```
+
+#### 步骤 2：配置到你的 Agent
+
+**Cursor** — 编辑 `~/.cursor/mcp.json`（全局）或项目的 `.cursor/mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "context-sync": {
+      "command": "node",
+      "args": ["/absolute/path/to/context-sync-mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+**Claude Code** — 运行：
+
+```bash
+claude mcp add context-sync node /absolute/path/to/context-sync-mcp/dist/index.js
+```
+
+**Cline (VS Code)** — 在 Cline 设置 → MCP Servers → 添加同样的 JSON。
+
+**其他 Agent** — 任何支持 MCP stdio transport 的 Agent 都能用：`node /path/to/dist/index.js`
+
+#### 步骤 3：配提示词
+
+把 `rules/` 目录下的模板复制到你的项目：
+- Cursor → 复制 `rules/context-sync.mdc` 到 `.cursor/rules/`
+- Claude Code → 复制 `rules/CLAUDE.md` 的内容到 `CLAUDE.md`
+
+</details>
 
 ---
 
