@@ -1,9 +1,13 @@
+<p align="center">
+  <img src="./assets/logo.png" width="120" alt="Context Sync Logo" />
+</p>
+
 <h1 align="center">
-  🔄 Context Sync MCP
+  Context Sync MCP
 </h1>
 
 <p align="center">
-  <b>Write once, sync everywhere for your AI Coding Agents.</b><br>
+  <b>Never Repeat Yourself to AI Again.</b><br>
   （让你的 Cursor / Claude Code 拥有跨设备、不遗忘的长期记忆）
 </p>
 
