@@ -67,7 +67,7 @@
 帮我安装并配置 context-sync-mcp。  
 1. 运行 `npm install -g context-sync-mcp`  
 2. 找到 context-sync-mcp 的安装路径（运行 `which context-sync-mcp` 或 `npm root -g`），确认 `dist/index.js` 的绝对路径  
-3. 在当前项目的 `.cursor/mcp.json`（如果是 Cursor）或用 `claude mcp add`（如果是 Claude Code）注册这个 MCP server。command 是 `node`，args 是 `["/绝对路径/context-sync-mcp/dist/index.js"]`  
+3. 在当前项目的 `.cursor/mcp.json`（Cursor）或用 `claude mcp add`（Claude Code）/ `codex mcp add`（Codex）注册这个 MCP server。command 是 `node`，args 是 `["/绝对路径/context-sync-mcp/dist/index.js"]`  
 4. 把下面的规则写入项目的 `.cursor/rules/context-sync.mdc`（Cursor）或 `CLAUDE.md`（Claude Code）：  
 
 你有 context-sync MCP 工具。开发过程中：
@@ -111,6 +111,24 @@ npm install -g context-sync-mcp
 claude mcp add context-sync node /绝对路径/context-sync-mcp/dist/index.js
 ```
 
+**OpenAI Codex** — 运行：
+```bash
+codex mcp add context-sync -- node /绝对路径/context-sync-mcp/dist/index.js
+```
+
+**Google Antigravity** — 编辑项目根目录的 `mcp_config.json` 或 `.mcp.json`：
+```json
+{
+  "mcpServers": {
+    "context-sync": {
+      "type": "local",
+      "command": "node",
+      "args": ["/绝对路径/context-sync-mcp/dist/index.js"]
+    }
+  }
+}
+```
+
 ### 步骤 3：注入提示词
 
 将本项目 `rules/` 目录下的模板复制到你的工作区：
@@ -145,7 +163,7 @@ flowchart LR
 
 ```mermaid
 sequenceDiagram
-    actor Dev as 👨‍💻 开发者
+    participant Dev as 👨‍💻 开发者
     participant Agent as 🤖 AI
     participant MCP as ⚙️ 组件
     participant Git as ☁️ 远端
