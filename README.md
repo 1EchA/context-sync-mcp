@@ -67,8 +67,8 @@
 帮我安装并配置 context-sync-mcp。  
 1. 运行 `npm install -g context-sync-mcp`  
 2. 找到 context-sync-mcp 的安装路径（运行 `which context-sync-mcp` 或 `npm root -g`），确认 `dist/index.js` 的绝对路径  
-3. 在当前项目的 `.cursor/mcp.json`（Cursor）或用 `claude mcp add`（Claude Code）/ `codex mcp add`（Codex）注册这个 MCP server。command 是 `node`，args 是 `["/绝对路径/context-sync-mcp/dist/index.js"]`  
-4. 把下面的规则写入项目的 `.cursor/rules/context-sync.mdc`（Cursor）或 `CLAUDE.md`（Claude Code）：  
+3. 帮我注册这个 MCP server（使用你的标准 MCP 配置命令或修改相应的 mcp.json）。command 是 `node`，args 是 `["/绝对路径/context-sync-mcp/dist/index.js"]`  
+4. 把下面的规则内容，追加写入到你的全局系统提示词、`.cursorrules`、`CLAUDE.md` 或任何适合你读取的项目/全局级规则配置中：  
 
 你有 context-sync MCP 工具。开发过程中：
 - 踩坑了 → write_context 写到 gotchas
