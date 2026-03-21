@@ -1,6 +1,6 @@
 {
   "name": "context-sync-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cross-device context sync for coding agents via MCP + Git",
   "type": "module",
   "main": "dist/index.js",
