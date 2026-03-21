@@ -5,18 +5,19 @@
  * Creates initial progress/summary context, ensures .gitattributes, and can optionally push.
  */
 
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { basename, join } from "node:path";
 import {
   resolveBasePath,
   hasGitRepo,
   getProjectRoot,
-  hasContextFiles,
   ensureContextDir,
   writeContextFile,
   ensureGitattributes,
   readSyncMeta,
+  readAllContextFiles,
   gitCommand,
+  CONTEXT_DIR,
 } from "../utils.js";
 import { syncPush } from "./sync-push.js";
 
@@ -31,20 +32,40 @@ async function getCurrentBranch(projectRoot: string): Promise<string | null> {
 }
 
 async function getReadmeTitle(projectRoot: string): Promise<string | null> {
-  try {
-    const content = await readFile(join(projectRoot, "README.md"), "utf-8");
-    const heading = content.match(/^#\s+(.+)$/m)?.[1]?.trim();
-    if (heading) return heading;
+  const candidates = ["README.md", "readme.md", "README.mdx", "readme.mdx"];
 
-    const firstLine = content
-      .split("\n")
-      .map((line) => line.trim())
-      .find(Boolean);
+  for (const filename of candidates) {
+    try {
+      const content = await readFile(join(projectRoot, filename), "utf-8");
+      const heading = content.match(/^#\s+(.+)$/m)?.[1]?.trim();
+      if (heading) return heading;
 
-    return firstLine || null;
-  } catch {
-    return null;
+      const firstLine = content
+        .split("\n")
+        .map((line) => line.trim())
+        .find(Boolean);
+
+      if (firstLine) return firstLine;
+    } catch {
+      continue;
+    }
   }
+
+  return null;
+}
+
+async function listContextShellFiles(projectRoot: string): Promise<string[]> {
+  try {
+    const entries = await readdir(join(projectRoot, CONTEXT_DIR));
+    return entries.sort();
+  } catch {
+    return [];
+  }
+}
+
+function formatBulletList(title: string, items: string[]): string {
+  if (items.length === 0) return `- **${title}**：无`;
+  return [`- **${title}**：`, ...items.map((item) => `  - ${item}`)].join("\n");
 }
 
 function buildInitialProgress(
@@ -135,17 +156,19 @@ export async function syncInit(
       `> ${error.message.split("\n")[0]}`;
   }
 
-  if (await hasContextFiles(projectRoot)) {
+  const existingContextFiles = await readAllContextFiles(projectRoot);
+  if (existingContextFiles.length > 0) {
     const meta = await readSyncMeta(projectRoot);
     const metaLine = meta
       ? `\n> 📌 Last sync: ${new Date(meta.last_sync).toISOString().replace("T", " ").slice(0, 19)} | 💻 Device: ${meta.device} | 🤖 Agent: ${meta.agent}`
       : "";
+    const detectedFiles = existingContextFiles.map((file) => file.filename).join(", ");
 
     return {
       content: [
         {
           type: "text" as const,
-          text: `ℹ️ Context Sync is already initialized for this project.${metaLine}${pullWarning}\n\nUse /sync-load to restore existing context, or /sync-save to push new updates.`,
+          text: `ℹ️ Context Sync is already initialized for this project.${metaLine}${pullWarning}\n\n- **Detected existing context**：${detectedFiles}\n- **Recommended next step**：run /sync-load to restore existing context before making updates\n- **After loading**：use /sync-save only when you have new changes to push`,
         },
       ],
     };
@@ -153,7 +176,9 @@ export async function syncInit(
 
   const branchName = await getCurrentBranch(projectRoot);
   const readmeTitle = await getReadmeTitle(projectRoot);
+  const shellFiles = await listContextShellFiles(projectRoot);
   const contextDir = await ensureContextDir(projectRoot);
+
   const initialProgress = (
     progress?.trim() ? progress.trim() : buildInitialProgress(projectName, branchName, readmeTitle)
   ) + "\n";
@@ -165,12 +190,34 @@ export async function syncInit(
   await writeContextFile(contextDir, "summary", initialSummary);
   await ensureGitattributes(projectRoot);
 
+  const autoDetected = [
+    `项目：${projectName}`,
+    ...(branchName ? [`当前分支：${branchName}`] : []),
+    ...(readmeTitle ? [`README 标题：${readmeTitle}`] : []),
+  ];
+  const agentProvided = [
+    ...(progress?.trim() ? ["自定义 progress"] : []),
+    ...(summary?.trim() ? ["自定义 summary"] : []),
+  ];
+  const defaultGenerated = [
+    ...(progress?.trim() ? [] : ["默认 progress 模板"]),
+    ...(summary?.trim() ? [] : ["默认 summary 模板"]),
+  ];
+  const shellDetected = shellFiles.filter((file) => !["task_progress.md", "SUMMARY.md"].includes(file));
+
+  const initBreakdown = [
+    formatBulletList("Auto-detected", autoDetected),
+    formatBulletList("Agent-provided", agentProvided),
+    formatBulletList("Default-generated", defaultGenerated),
+    ...(shellDetected.length ? [formatBulletList("Existing shell files reused", shellDetected)] : []),
+  ].join("\n");
+
   if (!autoPush) {
     return {
       content: [
         {
           type: "text" as const,
-          text: `✅ Context Sync initialized for ${projectName}.\n📁 Created initial context files in ${contextDir}${pullWarning}\n\nNext step: run /sync-save to push this baseline to remote.`,
+          text: `✅ Context Sync initialized for ${projectName}.${pullWarning}\n\n${initBreakdown}\n\n📁 Created initial context files in ${contextDir}\n➡️ Next step: run /sync-save to push this baseline to remote.`,
         },
       ],
     };
@@ -181,7 +228,7 @@ export async function syncInit(
     content: [
       {
         type: "text" as const,
-        text: `✅ Context Sync initialized for ${projectName}.\n📁 Bootstrapped progress + summary in ${contextDir}${pullWarning}\n\n${pushResult.content[0].text}`,
+        text: `✅ Context Sync initialized for ${projectName}.${pullWarning}\n\n${initBreakdown}\n\n📁 Bootstrapped progress + summary in ${contextDir}\n\n${pushResult.content[0].text}`,
       },
     ],
     ...(pushResult.isError ? { isError: true } : {}),

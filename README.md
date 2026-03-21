@@ -29,6 +29,15 @@
 
 ---
 
+## 🚀 推荐工作流
+
+- **新项目第一次接入**：执行 `/sync-init`
+- **日常开发中有新增上下文**：让 Agent 调用 `write_context` 记录到 `.context/`
+- **离开当前设备前保存**：执行 `/sync-save`
+- **在另一台设备恢复**：执行 `/sync-load`
+
+> 简单记忆：**先 init，一直 write，切换前 save，新设备 load**。
+
 ## ✨ 核心特性
 
 | 特性 | 说明 |
@@ -204,7 +213,7 @@ sequenceDiagram
 - `summary` (overwrite): 项目整体索引。
 
 ### `sync_init`
-为一个还没有 `.context/` 的项目建立第一份上下文基线。适用于 `/sync-init`、初始化上下文同步、初始化当前仓库的 context sync。若项目已有上下文，应改用 `/sync-load`。
+为一个还没有 `.context/` 的项目建立第一份上下文基线。适用于 `/sync-init`、初始化上下文同步、初始化当前仓库的 context sync。默认会自动探测项目名、当前分支和 README 标题，并生成保底的 `progress` / `summary`；如果 Agent 额外传入自定义内容，则以注入内容为准。若项目已有上下文，应改用 `/sync-load`。
 
 ### `sync_push`
 将 `.context/` 推送到 Git 远端。自动生成 `SUMMARY.md`、防冲突配置 `.gitattributes` 与同步元信息 `sync_meta.json`。适用于 `/sync-save`、`sync push`、保存/上传上下文。

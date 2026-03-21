@@ -75,6 +75,8 @@ async function q0_initBootstrap() {
   const text = result.content[0].text;
 
   quality(text.includes("initialized"), "sync_init 返回初始化成功提示");
+  quality(text.includes("Auto-detected"), "sync_init 返回自动探测说明");
+  quality(text.includes("Default-generated"), "sync_init 返回默认生成说明");
   quality(text.includes("Context synced successfully") || text.includes("Committed locally"), "sync_init 自动执行首次推送");
 
   const progress = await readFile(join(WORKDIR, ".context/task_progress.md"), "utf-8");
@@ -367,6 +369,32 @@ async function q11_promptAliasCoverage() {
   quality(indexSource.includes("Do NOT use sync_push for these requests"), "sync_load 描述明确接管 sync pull/load 请求");
 }
 
+async function q12_syncInitIdempotenceAndShell() {
+  section("Q12: sync_init 幂等性与空壳上下文");
+
+  const secondInit = await syncInit(undefined, undefined, undefined, false);
+  const secondText = secondInit.content[0].text;
+  quality(secondText.includes("already initialized"), "已有上下文时 sync_init 不重复初始化");
+  quality(secondText.includes("/sync-load"), "已有上下文时引导使用 /sync-load");
+
+  const shellBase = "/tmp/context-sync-shell-init";
+  const shellRepo = `${shellBase}/repo`;
+  execSync(`rm -rf ${shellBase} && mkdir -p ${shellRepo}`, { stdio: "pipe" });
+  execSync(`cd ${shellRepo} && git init && git config user.email test@example.com && git config user.name tester && mkdir -p .context && cat > .context/.gitattributes <<'INNER'\n# shell\n*.md merge=ours\nINNER`, { stdio: "pipe" });
+
+  const shellInit = await syncInit(undefined, undefined, shellRepo, false);
+  const shellText = shellInit.content[0].text;
+  const shellProgress = await readFile(join(shellRepo, ".context/task_progress.md"), "utf-8");
+  const shellSummary = await readFile(join(shellRepo, ".context/SUMMARY.md"), "utf-8");
+
+  quality(shellText.includes("initialized"), "空壳 .context 下仍可初始化");
+  quality(shellText.includes("Existing shell files reused"), "空壳 .context 会说明复用已有壳文件");
+  quality(shellProgress.includes("已初始化 Context Sync"), "空壳初始化生成 progress");
+  quality(shellSummary.includes("项目初始化摘要"), "空壳初始化生成 summary");
+
+  execSync(`rm -rf ${shellBase}`, { stdio: "pipe" });
+}
+
 // ── Main ─────────────────────────────────────────────────────────────
 
 async function main() {
@@ -393,6 +421,7 @@ async function main() {
     await q9_errorMessageActionability();
     await q10_gitattributesSurvival();
     await q11_promptAliasCoverage();
+    await q12_syncInitIdempotenceAndShell();
 
   } catch (error: any) {
     console.error(`\n💥 Unexpected error: ${error.message}`);
