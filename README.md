@@ -20,7 +20,7 @@
 
 ## 🎯 为什么需要它？
 
-> ❌ **痛点**：你可能上午用 Claude Code，下午切到 Codex，回家又在 Gemini / Antigravity 继续。Agent 刚摸清代码库的脾气、知道哪个 API 会报错，换个设备或换个 Agent 之后，它又变成了“零记忆”，你不得不从头解释什么是历史包袱。
+> ❌ **痛点**：上午用 Claude Code，好不容易让 Agent 摸清了代码库的逻辑、知道了哪个内部 API 会报错；结果晚换了台电脑，或者换了个模型，你的Coding Agent 瞬间失忆。然后又要在新的对话框里init，结果发现模型还是记不起来之前的agent到底踩过什么坑，跟你渡过过怎样的美好开发时间 :disguised_face:，然后就开始继续告诉他之前做到哪了，哪是坑之后别踩，只能说是身心俱疲。
 > 
 > ✅ **解法**：Context Sync 为 Agent 提供了一个**独立于对话、独立于具体模型的长期记忆库**。基于 Git 和 MCP，换台电脑、换个 Agent，敲一句 `/sync-load`，进度与上下文都能继续接上。
 
@@ -29,10 +29,14 @@
 
 > 它同步的不是“某个 Agent 的私有聊天记录”，而是项目里的结构化上下文文件；所以同一份上下文可以在 **Claude ↔ Codex ↔ Gemini** 之间复用。
 
-示例 由antigravity-claudecode opus4.6 - gpt-5.4
-<img width="689" height="316" alt="image" src="https://github.com/user-attachments/assets/10727698-6933-4ca3-aa81-3d41b07dd4c6" />
+💡 实际演示：由 Antigravity-Claude Code Opus 4.6 到 GPT-5.4  
 
----
+<div align="center">
+  <img width="60%" alt="演示截图1" src="https://github.com/user-attachments/assets/10727698-6933-4ca3-aa81-3d41b07dd4c6" />
+  <br><br>
+  <img width="60%" alt="演示截图2" src="https://github.com/user-attachments/assets/125fc560-0ef8-4c4a-8ac3-c62e80a8027f" />
+</div>
+
 
 ## 🚀 推荐工作流
 
@@ -42,9 +46,7 @@
 - **在另一台设备恢复**：执行 `/sync-load`
 
 > 简单记忆：**先 init，一直 write，切换前 save，新设备 load**。
->
-> ⚠️ **一个常见误区**：只更新 `progress` 只是同步“当前进度标记”，**不等于**保存了详细上下文。  
-> 比如“另一台机器补充了测试记录待保存”这种话，如果只写在 `task_progress.md` 里，那么另一台设备 `/sync-load` 时也只会看到这句进度说明；真正的测试详情、踩坑正文、架构决策，必须分别写入 `gotchas`、`architecture`、`api_notes`，这样 `/sync-load` 才能恢复出完整内容。
+
 
 ## ✨ 核心特性
 
@@ -69,8 +71,8 @@
 
 ## 📦 极速安装与配置
 
-不需要手动折腾 JSON，**直接让 Agent 帮你搞定一切**。
-
+与时俱进，**直接让 Agent 帮你搞定一切**。
+> 提示词中默认将补充提示词写道项目提示词中，如果需要写入全局，可以修改全局提示词
 ### 前置要求
 - **Node.js** ≥ 18.0.0
 - **Git** 已安装并配置好 SSH/HTTPS 认证
@@ -85,7 +87,7 @@
 1. 运行 `npm install -g context-sync-mcp`  
 2. 找到 context-sync-mcp 的安装路径（运行 `which context-sync-mcp` 或 `npm root -g`），确认 `dist/index.js` 的绝对路径  
 3. 帮我注册这个 MCP server（使用你的标准 MCP 配置命令或修改相应的 mcp.json）。command 是 `node`，args 是 `["/绝对路径/context-sync-mcp/dist/index.js"]`  
-4. 优先把下面的规则内容写入**当前项目**的规则文件（如 `.cursorrules`、`CLAUDE.md`、`.cursor/rules/`）；如果你明确知道自己在做什么，也可以额外放到全局规则中：  
+4. 优先把下面的规则内容写入**当前项目**的规则文件（如 `.cursorrules`、`CLAUDE.md`、`.cursor/rules/`）；
 
 你有 context-sync MCP 工具。开发过程中：
 - 踩坑了 → write_context 写到 gotchas
@@ -212,10 +214,8 @@ sequenceDiagram
 
 ---
 
-## 🔧 工具 API 详情
+## 🔧 工具详情
 
-<details>
-<summary><b>▸ 展开查看 API 参数</b></summary>
 
 ### `write_context`
 往 `.context/` 目录写入记录。
@@ -237,7 +237,7 @@ sequenceDiagram
 ### `sync_load`
 从远端拉取最新上下文，按优先级展示给 Agent 供推理使用。适用于 `/sync-load`、`sync pull`、拉取/恢复上下文、新设备恢复上下文。
 
-> 如果 `/sync-load` 之后只看到了 `SUMMARY.md` 和 `task_progress.md`，通常不是同步坏了，而是此前详细内容还没有写入对应的结构化文件；这时应检查是否已经把正文写入 `gotchas.md`、`architecture.md` 或 `api_notes.md`。
+> 如果 `/sync-load` 之后只看到了 `SUMMARY.md` 和 `task_progress.md`，通常不是同步坏了，而是此前详细内容还没有写入对应的结构化文件；这时应检查是否已经把内容写入 `gotchas.md`、`architecture.md` 或 `api_notes.md`。
 
 </details>
 
