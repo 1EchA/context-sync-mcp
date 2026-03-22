@@ -29,6 +29,9 @@
 
 > 它同步的不是“某个 Agent 的私有聊天记录”，而是项目里的结构化上下文文件；所以同一份上下文可以在 **Claude ↔ Codex ↔ Gemini** 之间复用。
 
+示例 由antigravity-claudecode opus4.6 - gpt-5.4
+<img width="689" height="316" alt="image" src="https://github.com/user-attachments/assets/10727698-6933-4ca3-aa81-3d41b07dd4c6" />
+
 ---
 
 ## 🚀 推荐工作流
