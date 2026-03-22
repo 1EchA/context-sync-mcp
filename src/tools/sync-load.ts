@@ -10,9 +10,11 @@ import {
   resolveBasePath,
   hasGitRepo,
   hasContextFiles,
+  getAheadBehind,
   readAllContextFiles,
   readContextFile,
   readSyncMeta,
+  getUpstreamRef,
   gitCommand,
   CONTEXT_DIR,
   FILE_MAP,
@@ -46,7 +48,7 @@ export async function syncLoad(topic?: string, projectPath?: string) {
     };
   }
 
-  // Step 2: git pull (use --ff-only for safety, avoids rebase conflicts)
+  // Step 2: inspect remote state and pull only when a fast-forward is possible
   let projectRoot: string;
   try {
     projectRoot = await getProjectRoot(projectPath);
@@ -63,13 +65,36 @@ export async function syncLoad(topic?: string, projectPath?: string) {
   }
 
   let pullWarning = "";
-  try {
-    await gitCommand(projectRoot, "pull", "--ff-only");
-  } catch (error: any) {
-    // Pull might fail if no remote, network issue, or diverged branches
-    // Continue with local files but warn the user
-    pullWarning = "\n\n⚠️ **Warning**: git pull failed — showing local data which may be stale.\n" +
-      `> ${error.message.split("\n")[0]}`;
+  const upstreamRef = await getUpstreamRef(projectRoot);
+
+  if (!upstreamRef) {
+    pullWarning = "\n\n⚠️ **Warning**: no upstream branch is configured — showing local context only.\n" +
+      "> Configure a remote/upstream before relying on cross-device sync.";
+  } else {
+    try {
+      await gitCommand(projectRoot, "fetch", "--quiet");
+      const { ahead, behind } = await getAheadBehind(projectRoot, upstreamRef);
+
+      if (ahead > 0 && behind > 0) {
+        pullWarning = "\n\n⚠️ **Warning**: local and remote history have diverged — showing local context only.\n" +
+          "> Reconcile the branch before relying on `/sync-load` to restore the latest shared state.";
+      } else if (behind > 0) {
+        try {
+          await gitCommand(projectRoot, "pull", "--ff-only");
+        } catch (error: any) {
+          pullWarning = "\n\n⚠️ **Warning**: remote has newer context, but fast-forward pull could not be applied cleanly.\n" +
+            "> You may have local `.context/` changes or local commits blocking the update.\n" +
+            `> ${error.message.split("\n")[0]}`;
+        }
+      } else if (ahead > 0) {
+        pullWarning = "\n\nℹ️ **Info**: local context includes unpushed commits — showing local context as-is.\n" +
+          "> The remote may be behind this device until you run `/sync-save`.";
+      }
+    } catch (error: any) {
+      pullWarning = "\n\n⚠️ **Warning**: could not check remote state — showing local context only.\n" +
+        "> This is usually caused by a network, authentication, or remote URL issue.\n" +
+        `> ${error.message.split("\n")[0]}`;
+    }
   }
 
   // Step 3: Check if .context/ exists

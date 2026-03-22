@@ -232,7 +232,11 @@ async function round7() {
     { file: "gotchas", action: "append", content: "## 临时错误测试\n- test" },
   ]);
   const pushFail = await syncPush();
-  assert(pushFail.content[0].text.includes("Committed locally") || pushFail.content[0].text.includes("push failed"),
+  assert(
+    pushFail.content[0].text.includes("could not be pushed") ||
+    pushFail.content[0].text.includes("push failed") ||
+    pushFail.content[0].text.includes("Remote network check failed") ||
+    pushFail.content[0].text.includes("No valid remote push target"),
     "Reports push failure gracefully");
   assert(!pushFail.content[0].text.includes("❌ Sync push failed"), "Not a fatal error, just push failed");
 

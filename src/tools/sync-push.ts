@@ -2,7 +2,7 @@
  * sync_push tool implementation
  * 
  * Commits and pushes .context/ directory to remote git.
- * Auto-generates SUMMARY.md, updates sync_meta.json, ensures .gitattributes.
+ * Auto-generates SUMMARY.md, updates sync_meta.json, and writes .gitattributes.
  */
 
 import { writeFile } from "node:fs/promises";
@@ -12,12 +12,64 @@ import {
   ensureContextDir,
   writeContextFile,
   gitCommand,
+  getAheadBehind,
+  getDefaultRemote,
+  getUpstreamRef,
   nowISO,
   getDeviceId,
   generateSummary,
   ensureGitattributes,
   CONTEXT_DIR,
 } from "../utils.js";
+
+function classifyPushFailure(errorMessage: string): { title: string; guidance: string } {
+  const message = errorMessage.toLowerCase();
+
+  if (message.includes("has no upstream branch")) {
+    return {
+      title: "This branch has no upstream remote yet.",
+      guidance: "Create the upstream with `git push -u <remote> HEAD`, then run `/sync-save` again.",
+    };
+  }
+
+  if (
+    message.includes("authentication failed") ||
+    message.includes("permission denied") ||
+    message.includes("could not read from remote repository")
+  ) {
+    return {
+      title: "Remote authentication failed.",
+      guidance: "Check your Git credentials/SSH key, then push again.",
+    };
+  }
+
+  if (
+    message.includes("could not resolve host") ||
+    message.includes("failed to connect") ||
+    message.includes("connection timed out") ||
+    message.includes("network is unreachable")
+  ) {
+    return {
+      title: "Remote network check failed.",
+      guidance: "Check your network connection and remote URL, then push again.",
+    };
+  }
+
+  if (
+    message.includes("does not appear to be a git repository") ||
+    message.includes("no configured push destination")
+  ) {
+    return {
+      title: "No valid remote push target is configured.",
+      guidance: "Add/fix your git remote, then run `/sync-save` again.",
+    };
+  }
+
+  return {
+    title: "Push failed after creating a local context commit.",
+    guidance: "Inspect the git error and push manually when ready.",
+  };
+}
 
 export async function syncPush(summary?: string, projectPath?: string) {
   try {
@@ -56,7 +108,52 @@ export async function syncPush(summary?: string, projectPath?: string) {
       };
     }
 
-    // 2. If summary provided, write it; otherwise auto-generate SUMMARY.md
+    // 2. Preflight remote state BEFORE generating new files / creating commits
+    const upstreamRef = await getUpstreamRef(projectRoot);
+    if (upstreamRef) {
+      try {
+        await gitCommand(projectRoot, "fetch", "--quiet");
+        const { ahead, behind } = await getAheadBehind(projectRoot, upstreamRef);
+
+        if (behind > 0 && ahead === 0) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: [
+                  "⚠️ Remote context is ahead of this branch.",
+                  "",
+                  "- **What happened**: another device or agent has already pushed newer `.context/` commits",
+                  "- **Why save is blocked**: creating a new local sync commit first would make the branch harder to fast-forward",
+                  "- **Recommended next step**: run `/sync-load` first, review the restored context, then run `/sync-save` again if you still have local updates",
+                ].join("\n"),
+              },
+            ],
+          };
+        }
+
+        if (behind > 0 && ahead > 0) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: [
+                  "⚠️ Local and remote context history have diverged.",
+                  "",
+                  "- **What happened**: this branch has local commits and the remote also has newer commits",
+                  "- **Why save is blocked**: creating another sync commit now would make reconciliation messier",
+                  "- **Recommended next step**: run `/sync-load` or reconcile the branch manually before trying `/sync-save` again",
+                ].join("\n"),
+              },
+            ],
+          };
+        }
+      } catch {
+        // Non-fatal here: keep current behavior and let push provide a classified error later.
+      }
+    }
+
+    // 3. If summary provided, write it; otherwise auto-generate SUMMARY.md
     if (summary) {
       await writeContextFile(contextDir, "summary", summary);
     } else {
@@ -64,10 +161,10 @@ export async function syncPush(summary?: string, projectPath?: string) {
       await writeContextFile(contextDir, "summary", autoSummary);
     }
 
-    // 3. Ensure .gitattributes exists (merge=ours strategy)
+    // 4. Ensure .gitattributes exists (conflict-risk reduction hint for Git)
     await ensureGitattributes(projectRoot);
 
-    // 4. Write sync_meta.json
+    // 5. Write sync_meta.json
     const meta = {
       last_sync: nowISO(),
       device: getDeviceId(),
@@ -79,10 +176,10 @@ export async function syncPush(summary?: string, projectPath?: string) {
       "utf-8"
     );
 
-    // 5. Stage ONLY .context/ files
+    // 6. Stage ONLY .context/ files
     await gitCommand(projectRoot, "add", `${CONTEXT_DIR}/`);
 
-    // 6. git commit — use `--` path spec to commit ONLY .context/ files
+    // 7. git commit — use `--` path spec to commit ONLY .context/ files
     const timestamp = new Date().toISOString().replace("T", " ").slice(0, 19);
     await gitCommand(
       projectRoot,
@@ -93,15 +190,29 @@ export async function syncPush(summary?: string, projectPath?: string) {
       `${CONTEXT_DIR}/`
     );
 
-    // 7. git push
+    // 8. git push
     try {
       await gitCommand(projectRoot, "push");
     } catch (error: any) {
+      const remoteName = await getDefaultRemote(projectRoot);
+      const classified = classifyPushFailure(error.message);
+      const upstreamHint = error.message.toLowerCase().includes("has no upstream branch") && remoteName
+        ? `\n- **Suggested command**: \`git push -u ${remoteName} HEAD\``
+        : "";
       return {
         content: [
           {
             type: "text" as const,
-            text: `✅ Committed locally, but push failed:\n${error.message}\n\nYou can manually push later with: git push`,
+            text: [
+              "⚠️ Context was committed locally, but could not be pushed.",
+              "",
+              `- **What happened**: ${classified.title}`,
+              `- **Next step**: ${classified.guidance}${upstreamHint}`,
+              "",
+              "```text",
+              error.message.split("\n")[0],
+              "```",
+            ].join("\n"),
           },
         ],
       };

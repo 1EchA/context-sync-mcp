@@ -12,7 +12,8 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "test": "npm run build && bash test/setup-sandbox.sh && cd test/sandbox && npx tsx ../e2e-runner.ts && npx tsx ../deep-audit.ts && npx tsx ../extended-audit.ts && npx tsx ../design-features.ts && npx tsx ../final-audit.ts",
-    "test:integration": "npm run build && npx tsx test/10-round-debug.ts && npx tsx test/quality-test.ts",
+    "test:integration": "npm run build && npx tsx test/10-round-debug.ts && npx tsx test/cross-device-acceptance.ts && npx tsx test/quality-test.ts",
+    "test:cross-device": "npm run build && npx tsx test/cross-device-acceptance.ts",
     "test:all": "npm test && npm run test:integration"
   },
   "engines": {

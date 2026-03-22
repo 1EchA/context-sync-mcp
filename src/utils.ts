@@ -134,6 +134,48 @@ export async function gitCommand(projectRoot: string, ...args: string[]): Promis
 }
 
 /**
+ * Get the current branch upstream ref, returns null if not configured
+ */
+export async function getUpstreamRef(projectRoot: string): Promise<string | null> {
+  try {
+    const { stdout } = await gitCommand(projectRoot, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}");
+    const upstream = stdout.trim();
+    return upstream || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get the first configured git remote name, returns null if none exist
+ */
+export async function getDefaultRemote(projectRoot: string): Promise<string | null> {
+  try {
+    const { stdout } = await gitCommand(projectRoot, "remote");
+    const remote = stdout
+      .split("\n")
+      .map((line) => line.trim())
+      .find(Boolean);
+    return remote || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Return ahead/behind counts compared with the given upstream ref.
+ * `ahead` means local-only commits; `behind` means upstream-only commits.
+ */
+export async function getAheadBehind(projectRoot: string, upstreamRef: string): Promise<{ ahead: number; behind: number }> {
+  const { stdout } = await gitCommand(projectRoot, "rev-list", "--left-right", "--count", `HEAD...${upstreamRef}`);
+  const [aheadRaw, behindRaw] = stdout.trim().split(/\s+/);
+  return {
+    ahead: parseInt(aheadRaw || "0", 10),
+    behind: parseInt(behindRaw || "0", 10),
+  };
+}
+
+/**
  * Check if .git exists at the given path
  */
 export async function hasGitRepo(dir: string): Promise<boolean> {
@@ -235,7 +277,8 @@ export async function generateSummary(projectRoot: string): Promise<string> {
 }
 
 /**
- * Ensure .context/.gitattributes exists with merge=ours strategy
+ * Ensure .context/.gitattributes exists with Git attributes that help reduce
+ * conflict risk for context files.
  */
 export async function ensureGitattributes(projectRoot: string): Promise<void> {
   const filepath = join(projectRoot, CONTEXT_DIR, ".gitattributes");
