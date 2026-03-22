@@ -102,7 +102,7 @@
 ---
 
 <details>
-<summary><b>▸ 展开查看：手动安装指南</b>（如果你偏爱自己动手）</summary>
+<summary><b>▸ 展开查看：手动安装指南</b></summary>
 
 ### 步骤 1：安装 CLI
 
