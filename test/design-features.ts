@@ -167,6 +167,26 @@ async function testGitattributesNotOverwritten() {
   assert(!content.includes("text eol=lf"), "Default content NOT forced");
 }
 
+async function testLegacyGitattributesMigrated() {
+  section("Test 6b: legacy .gitattributes is migrated safely");
+
+  const gaPath = join(process.cwd(), ".context/.gitattributes");
+  const { writeFile: wf } = await import("node:fs/promises");
+  await wf(
+    gaPath,
+    "# Old default template\r\n*.md merge=ours\r\nsync_meta.json merge=ours\r\n",
+    "utf-8"
+  );
+
+  const { getProjectRoot } = await import("../dist/utils.js");
+  const root = await getProjectRoot();
+  await ensureGitattributes(root);
+
+  const content = await readFile(gaPath, "utf-8");
+  assert(content.includes("text eol=lf"), "Legacy default is replaced with text normalization rules");
+  assert(!content.includes("merge=ours"), "Legacy merge=ours rules removed");
+}
+
 async function testWriteContextEntryCount() {
   section("Test 7: write_context returns entry count");
 
@@ -272,9 +292,10 @@ async function main() {
     await testCustomSummaryParameter();
     await testSyncMetaDisplay();
     await testSyncMetaDisplayTopic();
-    await testGitattributesAutoCreation();
-    await testGitattributesNotOverwritten();
-    await testWriteContextEntryCount();
+  await testGitattributesAutoCreation();
+  await testGitattributesNotOverwritten();
+  await testLegacyGitattributesMigrated();
+  await testWriteContextEntryCount();
     await testCountSectionsUtility();
     await testGenerateSummaryUtility();
     await testReadSyncMeta();

@@ -147,6 +147,35 @@ export async function getUpstreamRef(projectRoot: string): Promise<string | null
 }
 
 /**
+ * Get current local branch name, returns null for detached HEAD / unknown state.
+ */
+export async function getCurrentBranchName(projectRoot: string): Promise<string | null> {
+  try {
+    const { stdout } = await gitCommand(projectRoot, "rev-parse", "--abbrev-ref", "HEAD");
+    const branch = stdout.trim();
+    return branch && branch !== "HEAD" ? branch : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get the configured remote for the current branch, returns null if not configured.
+ */
+export async function getCurrentBranchRemote(projectRoot: string): Promise<string | null> {
+  const branch = await getCurrentBranchName(projectRoot);
+  if (!branch) return null;
+
+  try {
+    const { stdout } = await gitCommand(projectRoot, "config", "--get", `branch.${branch}.remote`);
+    const remote = stdout.trim();
+    return remote || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Get the first configured git remote name, returns null if none exist
  */
 export async function getDefaultRemote(projectRoot: string): Promise<string | null> {
@@ -284,8 +313,23 @@ export async function ensureGitattributes(projectRoot: string): Promise<void> {
   const filepath = join(projectRoot, CONTEXT_DIR, ".gitattributes");
   const content = `# Keep Context Sync files text-normalized across devices\n*.md text eol=lf\nsync_meta.json text eol=lf\n`;
   try {
-    await readFile(filepath, "utf-8");
-    // File already exists, don't overwrite
+    const existing = await readFile(filepath, "utf-8");
+
+    const normalizedLines = existing
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const nonCommentLines = normalizedLines.filter((line) => !line.startsWith("#"));
+    const isLegacyDefault =
+      nonCommentLines.length === 2 &&
+      nonCommentLines.includes("*.md merge=ours") &&
+      nonCommentLines.includes("sync_meta.json merge=ours");
+
+    if (isLegacyDefault && existing !== content) {
+      await writeFile(filepath, content, "utf-8");
+    }
   } catch {
     await writeFile(filepath, content, "utf-8");
   }

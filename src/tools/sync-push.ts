@@ -13,6 +13,7 @@ import {
   writeContextFile,
   gitCommand,
   getAheadBehind,
+  getCurrentBranchRemote,
   getDefaultRemote,
   getUpstreamRef,
   nowISO,
@@ -155,7 +156,12 @@ export async function syncPush(summary?: string, projectPath?: string) {
     const upstreamRef = await getUpstreamRef(projectRoot);
     if (upstreamRef) {
       try {
-        await gitCommand(projectRoot, "fetch", "--quiet");
+        const upstreamRemote = await getCurrentBranchRemote(projectRoot);
+        if (upstreamRemote) {
+          await gitCommand(projectRoot, "fetch", upstreamRemote, "--quiet");
+        } else {
+          await gitCommand(projectRoot, "fetch", "--quiet");
+        }
         const { ahead, behind } = await getAheadBehind(projectRoot, upstreamRef);
 
         if (behind > 0 && ahead === 0) {

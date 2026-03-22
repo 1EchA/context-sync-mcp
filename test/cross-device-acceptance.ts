@@ -238,6 +238,38 @@ async function testFetchFailureBlocksBeforeCommit() {
   }
 }
 
+async function testSecondaryRemoteDoesNotBlockHealthyUpstream() {
+  section("A5: 坏的 secondary remote 不应误拦截 /sync-save");
+
+  switchDevice(DEV_B);
+  execSync(`cd ${DEV_B} && git remote add backup /nonexistent/bad-remote.git`, { stdio: "pipe" });
+
+  try {
+    await writeContext([
+      {
+        file: "gotchas",
+        action: "append",
+        content: [
+          "## secondary remote 测试",
+          "- **现象**：仓库里有一个坏掉的无关 remote",
+          "- **预期**：只要 upstream remote 正常，/sync-save 仍然可以成功",
+        ].join("\n"),
+      },
+    ], DEV_B);
+
+    const pushResult = await syncPush(undefined, DEV_B);
+    assert(pushResult.content[0].text.includes("✅"), "坏的 secondary remote 不会误拦截 save");
+
+    switchDevice(DEV_A);
+    execSync(`cd ${DEV_A} && git reset --hard HEAD && git clean -fd`, { stdio: "pipe" });
+    const loadResult = await syncLoad(undefined, DEV_A);
+    assert(loadResult.content[0].text.includes("secondary remote 测试"), "健康 upstream 仍能把新上下文同步到另一台机器");
+  } finally {
+    switchDevice(DEV_B);
+    execSync(`cd ${DEV_B} && git remote remove backup`, { stdio: "pipe" });
+  }
+}
+
 async function main() {
   console.log("🔍 Cross-device acceptance test starting...");
   setupTwoDevices();
@@ -246,6 +278,7 @@ async function main() {
   await testStructuredDetailRoundTrip();
   await testRemoteAheadBlocksBeforeCommit();
   await testFetchFailureBlocksBeforeCommit();
+  await testSecondaryRemoteDoesNotBlockHealthyUpstream();
 
   console.log("\n" + "=".repeat(68));
   console.log(`Result: ${passed} passed, ${failed} failed`);
