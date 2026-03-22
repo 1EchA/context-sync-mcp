@@ -50,7 +50,7 @@
 | **🧠 结构化长期记忆** | 将零散的对话沉淀为 5 类标准文档（避雷点、架构决策等），拒绝遗忘。 |
 | **🔗 关联与自动编号** | 踩坑记录自动递增编号，支持 `related_to` 双向跳转，构建项目的知识图谱。 |
 | **⚡️ 跨设备 + 跨 Agent 同步** | `sync_push` / `sync_load` 一键指令，背靠 Git 实现可靠的版本控制与多端漫游；同一份上下文可被不同 Agent 继续使用。 |
-| **🛡️ 冲突规避策略** | 会为 `.context/` 写入 Git attributes 来降低上下文文件的合并冲突风险；出现复杂并发编辑时，仍可能需要人工处理。 |
+| **🛡️ 同步文件规范化** | 会为 `.context/` 写入轻量的 Git attributes，保持 Markdown / JSON 文件的文本格式一致；复杂并发编辑仍可能需要人工处理。 |
 
 ### Token 消耗估算
 
@@ -229,7 +229,7 @@ sequenceDiagram
 为一个还没有 `.context/` 的项目建立第一份上下文基线。适用于 `/sync-init`、初始化上下文同步、初始化当前仓库的 context sync。默认会自动探测项目名、当前分支和 README 标题，并生成保底的 `progress` / `summary`；如果 Agent 额外传入自定义内容，则以注入内容为准。若项目已有上下文，应改用 `/sync-load`。
 
 ### `sync_push`
-将 `.context/` 推送到 Git 远端。自动生成 `SUMMARY.md`、写入用于降低冲突风险的 `.gitattributes`，并更新同步元信息 `sync_meta.json`。适用于 `/sync-save`、`sync push`、保存/上传上下文。
+将 `.context/` 推送到 Git 远端。自动生成 `SUMMARY.md`、写入用于保持文本格式一致的 `.gitattributes`，并更新同步元信息 `sync_meta.json`。适用于 `/sync-save`、`sync push`、保存/上传上下文。
 
 ### `sync_load`
 从远端拉取最新上下文，按优先级展示给 Agent 供推理使用。适用于 `/sync-load`、`sync pull`、拉取/恢复上下文、新设备恢复上下文。
@@ -252,7 +252,7 @@ your-project/
     ├── architecture.md         # 架构决策
     ├── api_notes.md            # 接口行为说明
     ├── task_progress.md        # 当前任务进度
-    ├── .gitattributes          # Git attributes（用于降低冲突风险）
+    ├── .gitattributes          # Git attributes（保持文本格式一致）
     └── sync_meta.json          # 同步元数据 (设备识别)
 ```
 

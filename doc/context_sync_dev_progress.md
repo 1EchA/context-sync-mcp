@@ -158,7 +158,7 @@ cd test/sandbox && npx tsx ../e2e-runner.ts
 | 自动生成 SUMMARY.md | `sync-push.ts`, `utils.ts` | push 前自动从现有文件生成索引 |
 | sync_meta 信息展示 | `sync-load.ts`, `utils.ts` | load 时显示最后同步时间/设备/Agent |
 | git pull --ff-only | `sync-load.ts` | 替代 --rebase，避免冲突风险 |
-| .gitattributes | `utils.ts` | 自动创建 merge=ours 防合并冲突 |
+| .gitattributes | `utils.ts` | 自动创建文本规范化规则，保持跨设备换行风格一致 |
 | summary 参数 | `sync-push.ts`, `index.ts` | sync_push 支持可选自定义 SUMMARY |
 | 返回条目数 | `write-context.ts`, `utils.ts` | 如 `Appended to gotchas (now 3 entries)` |
 
@@ -248,4 +248,3 @@ cd test/sandbox && npx tsx ../e2e-runner.ts
 
 ### 下一步
 - [ ] 在 Cursor 中配置并测试
-

@@ -71,6 +71,49 @@ function classifyPushFailure(errorMessage: string): { title: string; guidance: s
   };
 }
 
+function classifyRemoteCheckFailure(errorMessage: string): { title: string; guidance: string } {
+  const message = errorMessage.toLowerCase();
+
+  if (
+    message.includes("authentication failed") ||
+    message.includes("permission denied") ||
+    message.includes("could not read from remote repository")
+  ) {
+    return {
+      title: "Could not authenticate with the remote during preflight.",
+      guidance: "Check your Git credentials/SSH key before running `/sync-save` again.",
+    };
+  }
+
+  if (
+    message.includes("could not resolve host") ||
+    message.includes("failed to connect") ||
+    message.includes("connection timed out") ||
+    message.includes("network is unreachable")
+  ) {
+    return {
+      title: "Could not reach the remote during preflight.",
+      guidance: "Check your network connection and remote URL before trying `/sync-save` again.",
+    };
+  }
+
+  if (
+    message.includes("does not appear to be a git repository") ||
+    message.includes("no such remote") ||
+    message.includes("repository not found")
+  ) {
+    return {
+      title: "The configured remote could not be used during preflight.",
+      guidance: "Fix the remote URL or upstream configuration before trying `/sync-save` again.",
+    };
+  }
+
+  return {
+    title: "Could not confirm remote branch state during preflight.",
+    guidance: "Resolve the git fetch issue first, then rerun `/sync-save`.",
+  };
+}
+
 export async function syncPush(summary?: string, projectPath?: string) {
   try {
     const projectRoot = await getProjectRoot(projectPath);
@@ -148,8 +191,26 @@ export async function syncPush(summary?: string, projectPath?: string) {
             ],
           };
         }
-      } catch {
-        // Non-fatal here: keep current behavior and let push provide a classified error later.
+      } catch (error: any) {
+        const classified = classifyRemoteCheckFailure(error.message);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: [
+                "⚠️ Could not verify remote context state before saving.",
+                "",
+                `- **What happened**: ${classified.title}`,
+                "- **Why save is blocked**: creating a new local sync commit while remote state is unknown can make reconciliation harder",
+                `- **Recommended next step**: ${classified.guidance}`,
+                "",
+                "```text",
+                error.message.split("\n")[0],
+                "```",
+              ].join("\n"),
+            },
+          ],
+        };
       }
     }
 
@@ -161,7 +222,7 @@ export async function syncPush(summary?: string, projectPath?: string) {
       await writeContextFile(contextDir, "summary", autoSummary);
     }
 
-    // 4. Ensure .gitattributes exists (conflict-risk reduction hint for Git)
+    // 4. Ensure .gitattributes exists (text normalization hint for Git)
     await ensureGitattributes(projectRoot);
 
     // 5. Write sync_meta.json

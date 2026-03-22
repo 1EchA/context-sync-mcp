@@ -143,7 +143,7 @@ async function testGitattributesAutoCreation() {
 
   if (exists) {
     const content = await readFile(gaPath, "utf-8");
-    assert(content.includes("merge=ours"), "Has merge=ours strategy");
+    assert(content.includes("text eol=lf"), "Has text normalization rules");
     assert(content.includes("*.md"), "Covers .md files");
     assert(content.includes("sync_meta.json"), "Covers sync_meta.json");
   }
@@ -164,7 +164,7 @@ async function testGitattributesNotOverwritten() {
 
   const content = await readFile(gaPath, "utf-8");
   assert(content.includes("Custom gitattributes"), "Existing .gitattributes preserved");
-  assert(!content.includes("merge=ours"), "Default content NOT forced");
+  assert(!content.includes("text eol=lf"), "Default content NOT forced");
 }
 
 async function testWriteContextEntryCount() {

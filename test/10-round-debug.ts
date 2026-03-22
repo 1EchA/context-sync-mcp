@@ -121,7 +121,7 @@ async function round2() {
 
   // Verify .gitattributes created
   const ga = await readFile(join(DEV_A, ".context/.gitattributes"), "utf-8");
-  assert(ga.includes("merge=ours"), ".gitattributes created");
+  assert(ga.includes("text eol=lf"), ".gitattributes created with text normalization");
 
   // Verify sync_meta.json
   const meta = await readSyncMeta(DEV_A);
@@ -227,23 +227,34 @@ async function round7() {
   // Break remote temporarily
   const origUrl = execSync(`cd ${DEV_A} && git remote get-url origin`, { encoding: "utf-8" }).trim();
   execSync(`cd ${DEV_A} && git remote set-url origin /nonexistent/repo.git`, { stdio: "pipe" });
+  const beforeBlockedCount = parseInt(
+    execSync(`cd ${DEV_A} && git rev-list --count HEAD`, { encoding: "utf-8" }).trim(),
+    10
+  );
 
   await writeContext([
     { file: "gotchas", action: "append", content: "## 临时错误测试\n- test" },
   ]);
   const pushFail = await syncPush();
   assert(
+    pushFail.content[0].text.includes("Could not verify remote context state before saving") ||
     pushFail.content[0].text.includes("could not be pushed") ||
     pushFail.content[0].text.includes("push failed") ||
     pushFail.content[0].text.includes("Remote network check failed") ||
     pushFail.content[0].text.includes("No valid remote push target"),
     "Reports push failure gracefully");
+  const afterBlockedCount = parseInt(
+    execSync(`cd ${DEV_A} && git rev-list --count HEAD`, { encoding: "utf-8" }).trim(),
+    10
+  );
+  assert(beforeBlockedCount === afterBlockedCount, "Preflight failure does not create a local sync commit");
   assert(!pushFail.content[0].text.includes("❌ Sync push failed"), "Not a fatal error, just push failed");
 
   // Restore remote
   execSync(`cd ${DEV_A} && git remote set-url origin "${origUrl}"`, { stdio: "pipe" });
-  // Manual push to fix state
-  execSync(`cd ${DEV_A} && git push`, { stdio: "pipe" });
+  // Save again after remote is fixed so later rounds still include this entry
+  const recoveredPush = await syncPush();
+  assert(recoveredPush.content[0].text.includes("✅"), "Push succeeds after remote is fixed");
 }
 
 async function round8() {

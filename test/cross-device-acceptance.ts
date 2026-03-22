@@ -198,6 +198,46 @@ async function testRemoteAheadBlocksBeforeCommit() {
   assert(beforeCount === afterCount, "被拦截时不会先创建新的本地 sync commit");
 }
 
+async function testFetchFailureBlocksBeforeCommit() {
+  section("A4: fetch 失败时 sync_push 在 commit 前中止");
+
+  switchDevice(DEV_A);
+  const beforeCount = parseInt(
+    execSync(`cd ${DEV_A} && git rev-list --count HEAD`, { encoding: "utf-8" }).trim(),
+    10
+  );
+  const originalUrl = execSync(`cd ${DEV_A} && git remote get-url origin`, { encoding: "utf-8" }).trim();
+
+  await writeContext([
+    {
+      file: "gotchas",
+      action: "append",
+      content: [
+        "## fetch 失败预检测试",
+        "- **现象**：远端状态无法确认时仍继续创建本地 sync commit",
+        "- **预期**：先提示修复 fetch，再允许 `/sync-save`",
+      ].join("\n"),
+    },
+  ], DEV_A);
+
+  execSync(`cd ${DEV_A} && git remote set-url origin /nonexistent/context-sync-test.git`, { stdio: "pipe" });
+
+  try {
+    const blockedPush = await syncPush(undefined, DEV_A);
+    const blockedText = blockedPush.content[0].text;
+    const afterCount = parseInt(
+      execSync(`cd ${DEV_A} && git rev-list --count HEAD`, { encoding: "utf-8" }).trim(),
+      10
+    );
+
+    assert(blockedText.includes("Could not verify remote context state before saving"), "fetch 失败时给出预检拦截提示");
+    assert(blockedText.includes("save is blocked"), "说明为什么这次不会继续保存");
+    assert(afterCount === beforeCount, "fetch 失败时不会先创建新的本地 sync commit");
+  } finally {
+    execSync(`cd ${DEV_A} && git remote set-url origin "${originalUrl}"`, { stdio: "pipe" });
+  }
+}
+
 async function main() {
   console.log("🔍 Cross-device acceptance test starting...");
   setupTwoDevices();
@@ -205,6 +245,7 @@ async function main() {
   await testProgressOnlyRoundTrip();
   await testStructuredDetailRoundTrip();
   await testRemoteAheadBlocksBeforeCommit();
+  await testFetchFailureBlocksBeforeCommit();
 
   console.log("\n" + "=".repeat(68));
   console.log(`Result: ${passed} passed, ${failed} failed`);

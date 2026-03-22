@@ -79,11 +79,11 @@ async function testGitattributesNewlines() {
 
   // Check each line is a separate, valid line
   const hasComment = lines.some(l => l.startsWith("#"));
-  const hasMdRule = lines.some(l => l.includes("*.md") && l.includes("merge=ours"));
-  const hasJsonRule = lines.some(l => l.includes("sync_meta.json") && l.includes("merge=ours"));
+  const hasMdRule = lines.some(l => l.includes("*.md") && l.includes("text eol=lf"));
+  const hasJsonRule = lines.some(l => l.includes("sync_meta.json") && l.includes("text eol=lf"));
   assert(hasComment, "Has comment line");
-  assert(hasMdRule, "Has *.md merge=ours rule");
-  assert(hasJsonRule, "Has sync_meta.json merge=ours rule");
+  assert(hasMdRule, "Has *.md text normalization rule");
+  assert(hasJsonRule, "Has sync_meta.json text normalization rule");
 }
 
 async function testHasContextFilesWithOnlyGitattributes() {
@@ -95,7 +95,7 @@ async function testHasContextFilesWithOnlyGitattributes() {
   await mkdir(contextDir, { recursive: true });
 
   // Create only .gitattributes
-  await writeFile(join(contextDir, ".gitattributes"), "*.md merge=ours\n", "utf-8");
+  await writeFile(join(contextDir, ".gitattributes"), "*.md text eol=lf\n", "utf-8");
 
   const has = await hasContextFiles(root);
   // hasContextFiles checks files.length > 0, so .gitattributes counts

@@ -380,7 +380,7 @@ async function q12_syncInitIdempotenceAndShell() {
   const shellBase = "/tmp/context-sync-shell-init";
   const shellRepo = `${shellBase}/repo`;
   execSync(`rm -rf ${shellBase} && mkdir -p ${shellRepo}`, { stdio: "pipe" });
-  execSync(`cd ${shellRepo} && git init && git config user.email test@example.com && git config user.name tester && mkdir -p .context && cat > .context/.gitattributes <<'INNER'\n# shell\n*.md merge=ours\nINNER`, { stdio: "pipe" });
+  execSync(`cd ${shellRepo} && git init && git config user.email test@example.com && git config user.name tester && mkdir -p .context && cat > .context/.gitattributes <<'INNER'\n# shell\n*.md -diff\nINNER`, { stdio: "pipe" });
 
   const shellInit = await syncInit(undefined, undefined, shellRepo, false);
   const shellText = shellInit.content[0].text;

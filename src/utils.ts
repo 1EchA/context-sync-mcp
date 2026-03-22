@@ -277,12 +277,12 @@ export async function generateSummary(projectRoot: string): Promise<string> {
 }
 
 /**
- * Ensure .context/.gitattributes exists with Git attributes that help reduce
- * conflict risk for context files.
+ * Ensure .context/.gitattributes exists with lightweight text normalization
+ * rules so context files keep stable LF endings across devices.
  */
 export async function ensureGitattributes(projectRoot: string): Promise<void> {
   const filepath = join(projectRoot, CONTEXT_DIR, ".gitattributes");
-  const content = `# Auto merge strategy: last-push wins (avoid conflicts)\n*.md merge=ours\nsync_meta.json merge=ours\n`;
+  const content = `# Keep Context Sync files text-normalized across devices\n*.md text eol=lf\nsync_meta.json text eol=lf\n`;
   try {
     await readFile(filepath, "utf-8");
     // File already exists, don't overwrite
