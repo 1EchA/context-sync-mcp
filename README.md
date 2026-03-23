@@ -262,7 +262,10 @@ your-project/
 > **最佳实践**：直接将 `.context/` 一并 commit 进业务代码仓库。如果你不希望污染业务代码，也可以在独立的文件夹（专用的 context 仓库）中运行 Agent。
 
 ---
-
+<p align="center">
+    感谢LinuxDo各位佬友的支持！欢迎加入linuxdo，学AI，来L站！https://linux.do/
+ </p>
+ 
 <p align="center">
   <b>MIT License</b><br>
   ✅ 允许个人、团队与商业使用、修改与分发<br>
